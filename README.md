@@ -38,7 +38,7 @@ Output:
 
 ## Oustanding features
 - **Genarates highly performant low-level code** 
-- Supports **field annotations** enabling fine-tuning of the resulting XML,
+- Supports **field, value, case and type annotations** enabling fine-tuning of the resulting XML,
 - Supports **custom tag and attribute name transformation** (e.g., snake_case, kebab-case, upper/lower case, etc),
 - **Indented or compact XML output** with pluggable output builders (including streaming),
 - Automatic **escaping of text** (element and attribute content) to produce well-formed XML.
@@ -68,16 +68,18 @@ Output:
 
 ## Supported annotations
 
+Annotations can be placed on types, fields, values and enum cases.
+
 | Annotation            | Description                                                                                           |
 |-----------------------|-------------------------------------------------------------------------------------------------------|
-| `@xmlAttribute`       | Marks a field to be serialized as an XML attribute of the enclosing element rather than as a child.   |
-| `@xmlContent`         | Marks a field as the content (text value) of the XML element instead of a tag or attribute.           |
-| `@xmlTag`             | Sets a custom XML tag or attribute name for this field (overrides the field name in serialization).   |
+| `@xmlAttribute`       | Marks target to be serialized as an XML attribute of the enclosing element rather than as a child.   |
+| `@xmlContent`         | Marks target as the content (text value) of the XML element instead of a tag or attribute.           |
+| `@xmlTag`             | Sets a custom XML tag or attribute name for this target (overrides the target name in serialization).   |
 | `@xmlItemTag`         | Specifies the tag name to use for each element in a collection or array.                              |
 | `@xmlNoItemTags`      | Prevents wrapping each collection element in an extra XML tag; all items are added directly.          |
-| `@xmlNoTagInsideCollection` | Omits the wrapping tag for each item when the field is inside a collection or array.                |
-| `@xmlUseEnumCaseNames`      | Uses the case name of an enum as the XML element tag when serializing the enum value. 
-| `@xmlValue`           | Use static value for an element, useful for enum cases     |
+| `@xmlNoTagInsideCollection` | Omits the tags of the target when inside collection or an array.                |
+| `@xmlUseEnumCaseNames`      | Sets the case name of an enum as the XML element tag when serializing the enum value instead of field name or enum type name. 
+| `@xmlValue`           | Defines static value for an element, useful for enum cases     |
 | `@xmlValueSelector`   | Selects which member/field/property from a nested type is used as the value/text for this element.    |              |
 
 
