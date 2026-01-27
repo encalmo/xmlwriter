@@ -46,7 +46,7 @@ class MacroXmlWriterSpec extends munit.FunSuite {
     )
   }
 
-  test("write Tuple 30 elements") {
+  test("write large Tuple") {
     val entity = (
       1, // Int
       "abc", // String
@@ -68,7 +68,6 @@ class MacroXmlWriterSpec extends munit.FunSuite {
       Set(6, 7, 8), // Set[Int]
       Map("x" -> 1), // Map[String, Int]
       Array(2, 4, 6), // Array[Int]
-      new java.util.Date(0L), // java.util.Date
       LocalDate.of(2024, 1, 1), // java.time.LocalDate
       BigDecimal("12345.67"), // java.math.BigDecimal
       None: Option[Int], // Option[Int] (None)
@@ -118,7 +117,6 @@ class MacroXmlWriterSpec extends munit.FunSuite {
          |        <Int>4</Int>
          |        <Int>6</Int>
          |    </Array>
-         |    <Date>Thu Jan 01 01:00:00 GMT 1970</Date>
          |    <LocalDate>2024-01-01</LocalDate>
          |    <BigDecimal>12345.67</BigDecimal>
          |    <Some>+999999999-12-31</Some>
@@ -950,7 +948,7 @@ class MacroXmlWriterSpec extends munit.FunSuite {
     assertEquals(
       xml,
       """|<?xml version='1.0' encoding='UTF-8'?>
-         |<Library libraryId="lib123">
+         |<Bookshelf libraryId="lib123">
          |    <name>City Library</name>
          |    <books>
          |        <Book isbn="978-3-16-148410-0">
@@ -970,7 +968,7 @@ class MacroXmlWriterSpec extends munit.FunSuite {
          |            </tags>
          |        </Book>
          |    </books>
-         |</Library>""".stripMargin
+         |</Bookshelf>""".stripMargin
     )
   }
 

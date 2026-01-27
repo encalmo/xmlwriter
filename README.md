@@ -238,7 +238,7 @@ println(xml)
 Output:
 ```xml
 <?xml version='1.0' encoding='UTF-8'?>
-<Library libraryId="lib123">
+<Bookshelf libraryId="lib123">
     <name>City Library</name>
     <books>
         <Book isbn="978-3-16-148410-0">
@@ -258,7 +258,7 @@ Output:
             </tags>
         </Book>
     </books>
-</Library>
+</Bookshelf>
 ```
 
 
