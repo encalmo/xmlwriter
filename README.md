@@ -135,6 +135,7 @@ println(xml)
 
 ## Table of contents
 
+- [Example usage](#example-usage)
 - [Oustanding features](#oustanding-features)
 - [Scala types supported directly without the need for typeclass derivation](#scala-types-supported-directly-without-the-need-for-typeclass-derivation)
 - [Supported Java types (when imported into Scala):](#supported-java-types-(when-imported-into-scala):)
@@ -142,7 +143,7 @@ println(xml)
    - [Notes](#notes)
 - [Dependencies](#dependencies)
 - [Usage](#usage)
-- [Examples](#examples)
+- [More examples](#more-examples)
 - [Project content](#project-content)
 
 ## Oustanding features
