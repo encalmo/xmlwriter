@@ -4,6 +4,17 @@
 
 Macro-powered XML fast serialization library for Scala 3.
 
+## Table of contents
+
+- [Oustanding features](#oustanding-features)
+- [Scala types supported directly without the need for typeclass derivation](#scala-types-supported-directly-without-the-need-for-typeclass-derivation)
+- [Supported Java types (when imported into Scala):](#supported-java-types-(when-imported-into-scala):)
+- [Annotations](#annotations)
+   - [Notes](#notes)
+- [Dependencies](#dependencies)
+- [Usage](#usage)
+- [Examples](#examples)
+
 ## Oustanding features
 - **Highly performant low-level code avoiding typeclass instance allocations** 
 - Support for **field annotations** enabling fine-tuning of the resulting XML,
@@ -57,7 +68,8 @@ Macro-powered XML fast serialization library for Scala 3.
 
 ## Dependencies
 
-- Scala >= 3.7.4
+   - [Scala](https://www.scala-lang.org) >= 3.7.4
+   - org.encalmo [**macro-utils** 0.9.0](https://central.sonatype.com/artifact/org.encalmo/macro-utils_3)
 
 ## Usage
 
@@ -240,4 +252,30 @@ println(xmlWithAnnotations)
 //     </Book>
 // </Bookshelf>
 
+```
+
+
+## Project content
+
+```
+├── .github
+│   └── workflows
+│       ├── pages.yaml
+│       ├── release.yaml
+│       └── test.yaml
+│
+├── .gitignore
+├── .scalafmt.conf
+├── LICENSE
+├── MacroXmlWriter.scala
+├── MacroXmlWriterSpec.test.scala
+├── Order.java
+├── project.scala
+├── README.md
+├── Status.java
+├── test.sh
+├── TestData.test.scala
+├── TestModel.test.scala
+├── XmlOutputBuilder.scala
+└── XmlWriter.scala
 ```
