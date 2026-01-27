@@ -9,7 +9,7 @@ Macro-powered fast and easy XML serialization library for Scala 3.
 - [Example usage](#example-usage)
 - [Oustanding features](#oustanding-features)
 - [Scala types supported directly without the need for typeclass derivation](#scala-types-supported-directly-without-the-need-for-typeclass-derivation)
-- [Supported Java types:](#supported-java-types:)
+- [Supported Java types](#supported-java-types)
 - [Supported annotations](#supported-annotations)
    - [Notes](#notes)
 - [Key abstractions](#key-abstractions)
