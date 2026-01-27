@@ -7,6 +7,58 @@ import java.nio.charset.StandardCharsets
 
 class MacroXmlWriterSpec extends munit.FunSuite {
 
+  test("write simple case class") {
+
+    case class Address(
+        street: String,
+        city: String,
+        postcode: String
+    )
+
+    case class Employee(
+        name: String,
+        age: Int,
+        email: Option[String],
+        addresses: List[Address],
+        active: Boolean
+    )
+
+    val entity = Employee(
+      name = "John Doe",
+      age = 30,
+      email = Some("john.doe@example.com"),
+      addresses = List(
+        Address(street = "123 Main St", city = "Anytown", postcode = "12345"),
+        Address(street = "456 Back St", city = "Downtown", postcode = "78901")
+      ),
+      active = true
+    )
+    val xml = XmlWriter.writeIndented(entity)
+    println(xml)
+    assertEquals(
+      xml,
+      """|<?xml version='1.0' encoding='UTF-8'?>
+         |<Employee>
+         |    <name>John Doe</name>
+         |    <age>30</age>
+         |    <email>john.doe@example.com</email>
+         |    <addresses>
+         |        <Address>
+         |            <street>123 Main St</street>
+         |            <city>Anytown</city>
+         |            <postcode>12345</postcode>
+         |        </Address>
+         |        <Address>
+         |            <street>456 Back St</street>
+         |            <city>Downtown</city>
+         |            <postcode>78901</postcode>
+         |        </Address>
+         |    </addresses>
+         |    <active>true</active>
+         |</Employee>""".stripMargin
+    )
+  }
+
   test("write Enum") {
     val entity = Citizenship.UK
     val xml = XmlWriter.writeIndentedUsingRootTagName("citizenship", entity, addXmlDeclaration = false)

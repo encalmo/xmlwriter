@@ -1,7 +1,7 @@
 #!/bin/sh
 
 if [ $# -ge 1 ]; then
-    SUFFIX="--test-only *$1"
+    SUFFIX="--test-only *$@"
 else
     SUFFIX=''
 fi

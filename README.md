@@ -4,24 +4,133 @@
 
 Macro-powered fast and easy XML serialization library for Scala 3.
 
+## Example usage
+
 ```scala
 import org.encalmo.writer.xml.XmlWriter
 
-case class Person(name: String, age: Int)
+case class Address(
+    street: String,
+    city: String,
+    postcode: String
+)
 
-val person = Person("John Doe", 42)
+case class Employee(
+    name: String,
+    age: Int,
+    email: Option[String],
+    addresses: List[Address],
+    active: Boolean
+)
 
-val xml: String = XmlWriter.writeIndented(person)
+val entity = Employee(
+    name = "John Doe",
+    age = 30,
+    email = Some("john.doe@example.com"),
+    addresses = List(
+    Address(street = "123 Main St", city = "Anytown", postcode = "12345"),
+    Address(street = "456 Back St", city = "Downtown", postcode = "78901")
+    ),
+    active = true
+)
 
+val xml = XmlWriter.writeIndented(entity)
 println(xml)
 ```
 Output:
 ```xml
 <?xml version='1.0' encoding='UTF-8'?>
-<Person>
-     <name>John Doe</name>
-     <age>42</age>
-</Person>
+<Employee>
+    <name>John Doe</name>
+    <age>30</age>
+    <email>john.doe@example.com</email>
+    <addresses>
+        <Address>
+            <street>123 Main St</street>
+            <city>Anytown</city>
+            <postcode>12345</postcode>
+        </Address>
+        <Address>
+            <street>456 Back St</street>
+            <city>Downtown</city>
+            <postcode>78901</postcode>
+        </Address>
+    </addresses>
+    <active>true</active>
+</Employee>
+```
+
+The example above produces the following inlined code:
+```scala
+val xml: String = {
+
+    org.encalmo.writer.xml.XmlWriter.writeIndented[Employee]{
+      final lazy given val builder:
+        org.encalmo.writer.xml.XmlOutputBuilder.IndentedXmlStringBuilder =
+        org.encalmo.writer.xml.XmlOutputBuilder.indented(
+          indentation = 4,
+          initialString = if addXmlDeclaration then
+              "<?xml version=\'1.0\' encoding=\'UTF-8\'?>" else ""
+        )
+      
+        builder.appendElementStart("Employee", Nil)
+        
+        def writeCaseClassToXml_Employee(): Unit = {
+
+            builder.appendElementStart("name")
+            builder.appendText(entity.name.toString())
+            builder.appendElementEnd("name")
+
+            builder.appendElementStart("age")
+            builder.appendText(entity.age.toString())
+            builder.appendElementEnd("age")
+              
+            entity.email match {
+                  case Some(value) =>
+                      builder.appendElementStart("email")
+                      builder.appendText(value.toString())
+                      builder.appendElementEnd("email")
+
+                  case None =>
+                    ()
+            }
+            
+            builder.appendElementStart("addresses")
+
+            entity.addresses.iterator.foreach( (value: Address) => {
+                    builder.appendElementStart("Address", Nil)
+                    
+                    def writeCaseClassToXml_Address(): Unit ={
+                        builder.appendElementStart("street")
+                        builder.appendText(value.street.toString()
+                        builder.appendElementEnd("street")
+
+                        builder.appendElementStart("city")
+                        builder.appendText(value.city.toString())
+                        builder.appendElementEnd("city")
+
+                        builder.appendElementStart("postcode")
+                        builder.appendText(value.postcode.toString())
+                        builder.appendElementEnd("postcode")
+                    }
+
+                    writeCaseClassToXml_Address()
+                    builder.appendElementEnd("Address")
+                }
+            )
+            builder.appendElementEnd("addresses")
+              
+            builder.appendElementStart("active")
+            builder.appendText(entity.active.toString())
+            builder.appendElementEnd("active")
+        }
+
+        writeCaseClassToXml_Employee()
+        builder.appendElementEnd("Employee")
+    }
+    builder.result
+}
+println(xml)
 ```
 
 ## Table of contents
@@ -104,7 +213,7 @@ or with SCALA-CLI
 
     //> using dep org.encalmo::xmlwriter:0.9.0
 
-## Examples
+## More examples
 
 Example with nested case classes and optional fields:
 
