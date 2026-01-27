@@ -40,8 +40,8 @@ Macro-powered XML fast serialization library for Scala 3.
 
 ## Supported Java types (when imported into Scala):
 - **Java boxed primitives:** `java.lang.Integer`, `java.lang.Long`, `java.lang.Double`, etc.
-- **Java records:**
-- **Java enums:**
+- **Java records**
+- **Java enums**
 - **Java iterables:** Support for `java.util.List`, `java.util.Set`, and other iterables
 - **Java maps:** Support for `java.util.Map` and subclasses
 
@@ -93,13 +93,15 @@ val person = Person("John Doe", 42)
 
 // Serialize as indented XML (with XML declaration)
 val xml: String = XmlWriter.writeIndented(person)
-
 println(xml)
-// xml: String =
-// <?xml version='1.0' encoding='UTF-8'?><Person>
-//     <name>John Doe</name>
-//     <age>42</age>
-// </Person>
+```
+Output:
+```xml
+<?xml version='1.0' encoding='UTF-8'?>
+<Person>
+     <name>John Doe</name>
+     <age>42</age>
+</Person>
 ```
 
 More advanced example with nested case classes and optional fields:
@@ -154,28 +156,30 @@ val employee = Employee(
 
 // Serialize as indented XML (with XML declaration)
 val xml: String = XmlWriter.writeIndented(employee)
-
 println(xml)
-// Output:
-// <?xml version='1.0' encoding='UTF-8'?><Employee>
-//     <name>Alice Smith</name>
-//     <age>29</age>
-//     <email>alice.smith@company.com</email>
-//     <address>
-//         <street>456 Market Ave</street>
-//         <city>Metropolis</city>
-//         <postcode>90210</postcode>
-//     </address>
-//     <company>
-//         <name>Acme Widgets Inc.</name>
-//         <address>
-//             <street>123 Corporate Plaza</street>
-//             <city>Metropolis</city>
-//             <postcode>90211</postcode>
-//             <country>USA</country>
-//         </address>
-//     </company>
-// </Employee>
+```
+Output:
+```xml
+<?xml version='1.0' encoding='UTF-8'?>
+<Employee>
+    <name>Alice Smith</name>
+    <age>29</age>
+    <email>alice.smith@company.com</email>
+    <address>
+        <street>456 Market Ave</street>
+        <city>Metropolis</city>
+        <postcode>90210</postcode>
+    </address>
+    <company>
+        <name>Acme Widgets Inc.</name>
+        <address>
+            <street>123 Corporate Plaza</street>
+            <city>Metropolis</city>
+            <postcode>90211</postcode>
+            <country>USA</country>
+        </address>
+    </company>
+</Employee>
 ```
 
 ```scala
@@ -228,30 +232,33 @@ val library = Library(
   )
 )
 
-val xmlWithAnnotations: String = XmlWriter.writeIndented(library)
-
-println(xmlWithAnnotations)
-// Output:
-// <?xml version='1.0' encoding='UTF-8'?><Bookshelf libraryId="lib123">
-//     <name>City Library</name>
-//     <Book isbn="978-3-16-148410-0">
-//         <title>Programming Scala</title>
-//         <author>Dean Wampler</author>
-//         <tags>
-//             <Tag name="Scala">Functional</Tag>
-//             <Tag name="Programming">JVM</Tag>
-//         </tags>
-//     </Book>
-//     <Book isbn="978-1-61729-065-7">
-//         <title>Functional Programming in Scala</title>
-//         <author>Paul Chiusano</author>
-//         <tags>
-//             <Tag name="Scala">FP</Tag>
-//             <Tag name="Education">Advanced</Tag>
-//         </tags>
-//     </Book>
-// </Bookshelf>
-
+val xml: String = XmlWriter.writeIndented(library)
+println(xml)
+```
+Output:
+```xml
+<?xml version='1.0' encoding='UTF-8'?>
+<Library libraryId="lib123">
+    <name>City Library</name>
+    <books>
+        <Book isbn="978-3-16-148410-0">
+            <title>Programming Scala</title>
+            <author>Dean Wampler</author>
+            <tags>
+                <Tag name="Scala">Functional</Tag>
+                <Tag name="Programming">JVM</Tag>
+            </tags>
+        </Book>
+        <Book isbn="978-1-61729-065-7">
+            <title>Functional Programming in Scala</title>
+            <author>Paul Chiusano</author>
+            <tags>
+                <Tag name="Scala">FP</Tag>
+                <Tag name="Education">Advanced</Tag>
+            </tags>
+        </Book>
+    </books>
+</Library>
 ```
 
 

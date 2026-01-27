@@ -823,4 +823,151 @@ class MacroXmlWriterSpec extends munit.FunSuite {
     )
   }
 
+  test("write Employee case class") {
+    case class Address(
+        street: String,
+        city: String,
+        postcode: String,
+        country: Option[String] = None
+    )
+
+    case class Company(
+        name: String,
+        address: Address
+    )
+
+    case class Employee(
+        name: String,
+        age: Int,
+        email: Option[String],
+        address: Option[Address],
+        company: Option[Company]
+    )
+
+    val employee = Employee(
+      name = "Alice Smith",
+      age = 29,
+      email = Some("alice.smith@company.com"),
+      address = Some(
+        Address(
+          street = "456 Market Ave",
+          city = "Metropolis",
+          postcode = "90210",
+          country = None
+        )
+      ),
+      company = Some(
+        Company(
+          name = "Acme Widgets Inc.",
+          address = Address(
+            street = "123 Corporate Plaza",
+            city = "Metropolis",
+            postcode = "90211",
+            country = Some("USA")
+          )
+        )
+      )
+    )
+
+    val xml: String = XmlWriter.writeIndented(employee)
+    println(xml)
+    assertEquals(
+      xml,
+      """|<?xml version='1.0' encoding='UTF-8'?>
+         |<Employee>
+         |    <name>Alice Smith</name>
+         |    <age>29</age>
+         |    <email>alice.smith@company.com</email>
+         |    <address>
+         |        <street>456 Market Ave</street>
+         |        <city>Metropolis</city>
+         |        <postcode>90210</postcode>
+         |    </address>
+         |    <company>
+         |        <name>Acme Widgets Inc.</name>
+         |        <address>
+         |            <street>123 Corporate Plaza</street>
+         |            <city>Metropolis</city>
+         |            <postcode>90211</postcode>
+         |            <country>USA</country>
+         |        </address>
+         |    </company>
+         |</Employee>""".stripMargin
+    )
+  }
+
+  test("write Library case class with XML annotations") {
+    case class Tag(
+        @xmlAttribute name: String,
+        @xmlContent value: String
+    )
+
+    @xmlName("Bookshelf")
+    case class Library(
+        @xmlAttribute libraryId: String,
+        name: String,
+        @xmlItemTag("Book") books: List[Book]
+    )
+
+    case class Book(
+        @xmlAttribute isbn: String,
+        title: String,
+        author: String,
+        tags: List[Tag]
+    )
+
+    val library = Library(
+      libraryId = "lib123",
+      name = "City Library",
+      books = List(
+        Book(
+          isbn = "978-3-16-148410-0",
+          title = "Programming Scala",
+          author = "Dean Wampler",
+          tags = List(
+            Tag(name = "Scala", value = "Functional"),
+            Tag(name = "Programming", value = "JVM")
+          )
+        ),
+        Book(
+          isbn = "978-1-61729-065-7",
+          title = "Functional Programming in Scala",
+          author = "Paul Chiusano",
+          tags = List(
+            Tag(name = "Scala", value = "FP"),
+            Tag(name = "Education", value = "Advanced")
+          )
+        )
+      )
+    )
+
+    val xml: String = XmlWriter.writeIndented(library)
+    println(xml)
+    assertEquals(
+      xml,
+      """|<?xml version='1.0' encoding='UTF-8'?>
+         |<Library libraryId="lib123">
+         |    <name>City Library</name>
+         |    <books>
+         |        <Book isbn="978-3-16-148410-0">
+         |            <title>Programming Scala</title>
+         |            <author>Dean Wampler</author>
+         |            <tags>
+         |                <Tag name="Scala">Functional</Tag>
+         |                <Tag name="Programming">JVM</Tag>
+         |            </tags>
+         |        </Book>
+         |        <Book isbn="978-1-61729-065-7">
+         |            <title>Functional Programming in Scala</title>
+         |            <author>Paul Chiusano</author>
+         |            <tags>
+         |                <Tag name="Scala">FP</Tag>
+         |                <Tag name="Education">Advanced</Tag>
+         |            </tags>
+         |        </Book>
+         |    </books>
+         |</Library>""".stripMargin
+    )
+  }
+
 }
