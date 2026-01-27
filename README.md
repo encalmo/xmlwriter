@@ -2,7 +2,27 @@
 
 # xmlwriter
 
-Macro-powered XML fast serialization library for Scala 3.
+Macro-powered fast and easy XML serialization library for Scala 3.
+
+```scala
+import org.encalmo.writer.xml.XmlWriter
+
+case class Person(name: String, age: Int)
+
+val person = Person("John Doe", 42)
+
+val xml: String = XmlWriter.writeIndented(person)
+
+println(xml)
+```
+Output:
+```xml
+<?xml version='1.0' encoding='UTF-8'?>
+<Person>
+     <name>John Doe</name>
+     <age>42</age>
+</Person>
+```
 
 ## Table of contents
 
@@ -17,14 +37,14 @@ Macro-powered XML fast serialization library for Scala 3.
 - [Project content](#project-content)
 
 ## Oustanding features
-- **Highly performant low-level code avoiding typeclass instance allocations** 
-- Support for **field annotations** enabling fine-tuning of the resulting XML,
-- Support for **custom tag and attribute name transformation** (e.g., snake_case, kebab-case, upper/lower case, etc),
+- **Genarates highly performant low-level code** 
+- Supports **field annotations** enabling fine-tuning of the resulting XML,
+- Supports **custom tag and attribute name transformation** (e.g., snake_case, kebab-case, upper/lower case, etc),
 - **Indented or compact XML output** with pluggable output builders (including streaming),
 - Automatic **escaping of text** (element and attribute content) to produce well-formed XML.
 - Extensible to custom types via **typeclass** instances,
-- Can automatically derive of the `XmlWriter` typeclass if needed,
-- Use of `toString()` representation of the instance valuea as a fallback strategy.
+- Can automatically **derive** `XmlWriter` typeclass if requested,
+- Invokes `toString()` as a **fallback** strategy when type is not supported directly or does not have XmlWriter instance in scope.
 
 ## Scala types supported directly without the need for typeclass derivation
 - **Case classes** and nested case classes (including recursive, deeply nested types)
@@ -46,20 +66,20 @@ Macro-powered XML fast serialization library for Scala 3.
 - **Java iterables:** Support for `java.util.List`, `java.util.Set`, and other iterables
 - **Java maps:** Support for `java.util.Map` and subclasses
 
-> **Note:**  
-> You can derive XML serialization for **any product (`case class`) or sum (`sealed trait`/Scala 3 enum) type** recursively composed of the above types.  
+## Supported annotations
 
-> You can provide your own custom `XmlWriter` for arbitrary types as well.
+| Annotation            | Description                                                                                           |
+|-----------------------|-------------------------------------------------------------------------------------------------------|
+| `@xmlAttribute`       | Marks a field to be serialized as an XML attribute of the enclosing element rather than as a child.   |
+| `@xmlContent`         | Marks a field as the content (text value) of the XML element instead of a tag or attribute.           |
+| `@xmlTag`             | Sets a custom XML tag or attribute name for this field (overrides the field name in serialization).   |
+| `@xmlItemTag`         | Specifies the tag name to use for each element in a collection or array.                              |
+| `@xmlNoItemTags`      | Prevents wrapping each collection element in an extra XML tag; all items are added directly.          |
+| `@xmlNoTagInsideCollection` | Omits the wrapping tag for each item when the field is inside a collection or array.                |
+| `@xmlUseEnumCaseNames`      | Uses the case name of an enum as the XML element tag when serializing the enum value. 
+| `@xmlValue`           | Use static value for an element, useful for enum cases     |
+| `@xmlValueSelector`   | Selects which member/field/property from a nested type is used as the value/text for this element.    |              |
 
-## Annotations
-
-| Annotation                                   | Usage Example                                            | Description                                                                                           |
-|-----------------------------------------------|----------------------------------------------------------|-------------------------------------------------------------------------------------------------------|
-| `@xmlAttribute`                              | `@xmlAttribute id: String`                               | Marks a field to be serialized as an XML attribute of the enclosing element rather than as a child.   |
-| `@xmlContent`                                | `@xmlContent text: String`                               | Marks a field as the content (text value) of the XML element instead of a tag or attribute.           |
-| `@xmlName("tagName")`                        | `@xmlName("person") name: String`                        | Sets a custom XML tag or attribute name for this field (overrides the field name in serialization).   |
-| `@xmlItemTag("itemTagName")`                 | `@xmlItemTag("entry") entries: List[String]`             | Specifies the tag name to use for each element in a collection or array.                              |
-| `@xmlNoItemTags`                             | `@xmlNoItemTags values: List[String]`                    | Prevents wrapping each collection element in an extra XML tag; all items are added directly.          |
 
 ### Notes
 - All annotations are defined in `org.encalmo.writer.xml.annotation`.
@@ -84,28 +104,7 @@ or with SCALA-CLI
 
 ## Examples
 
-Simple example of the case class serialization:
-```scala
-import org.encalmo.writer.xml.XmlWriter
-
-case class Person(name: String, age: Int)
-
-val person = Person("John Doe", 42)
-
-// Serialize as indented XML (with XML declaration)
-val xml: String = XmlWriter.writeIndented(person)
-println(xml)
-```
-Output:
-```xml
-<?xml version='1.0' encoding='UTF-8'?>
-<Person>
-     <name>John Doe</name>
-     <age>42</age>
-</Person>
-```
-
-More advanced example with nested case classes and optional fields:
+Example with nested case classes and optional fields:
 
 ```scala
 import org.encalmo.writer.xml.XmlWriter
@@ -187,14 +186,14 @@ Output:
 // Example: Serialize a case class with collections and XML annotations
 
 import org.encalmo.writer.xml.XmlWriter
-import org.encalmo.writer.xml.annotation.{xmlAttribute, xmlItemTag, xmlName}
+import org.encalmo.writer.xml.annotation.{xmlAttribute, xmlItemTag, xmlTag}
 
 case class Tag(
   @xmlAttribute name: String,
   value: String
 )
 
-@xmlName("Bookshelf")
+@xmlTag("Bookshelf")
 case class Library(
   @xmlAttribute libraryId: String,
   name: String,

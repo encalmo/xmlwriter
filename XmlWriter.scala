@@ -7,27 +7,6 @@ trait XmlWriter[A] {
   def write(name: String, value: A, createTag: Boolean)(using XmlOutputBuilder): Unit
 }
 
-object annotation {
-
-  /** Annotation to mark a field as an XML attribute. */
-  class xmlAttribute extends scala.annotation.StaticAnnotation
-
-  /** Annotation to mark a field as an XML element content. */
-  class xmlContent extends scala.annotation.StaticAnnotation
-
-  /** Annotation to define the name of the XML element. */
-  case class xmlName(val name: String & Singleton) extends scala.annotation.StaticAnnotation
-
-  /** Annotation to define the name of the XML element wrapping each item in an array or collection.
-    */
-  case class xmlItemTag(val name: String & Singleton) extends scala.annotation.StaticAnnotation
-
-  /** Annotation to switch off wrapping each item in an array or collection in a separate XML element.
-    */
-  class xmlNoItemTags extends scala.annotation.StaticAnnotation
-
-}
-
 object XmlWriter {
 
   import scala.quoted.*

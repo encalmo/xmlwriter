@@ -7,6 +7,16 @@ import java.nio.charset.StandardCharsets
 
 class MacroXmlWriterSpec extends munit.FunSuite {
 
+  test("write Enum") {
+    val entity = Citizenship.UK
+    val xml = XmlWriter.writeIndentedUsingRootTagName("citizenship", entity, addXmlDeclaration = false)
+    println(xml)
+    assertEquals(
+      xml,
+      """|<citizenship>United Kingdom</citizenship>""".stripMargin
+    )
+  }
+
   test("write Option") {
     val entity = Option(Vector(1.2, 3.4))
     val xml = XmlWriter.writeIndentedUsingRootTagName("foo", entity, addXmlDeclaration = false)
@@ -277,8 +287,8 @@ class MacroXmlWriterSpec extends munit.FunSuite {
     )
   }
 
-  test("write list of Address using name provided by xmlName annotation on a value") {
-    @xmlName("Addresses") val entity = List(TestData.address1, TestData.address2)
+  test("write list of Address using name provided by xmlTag annotation on a value") {
+    @xmlTag("Addresses") val entity = List(TestData.address1, TestData.address2)
     val xml = XmlWriter.writeIndented(entity)
     println(xml)
     assertEquals(
@@ -299,8 +309,8 @@ class MacroXmlWriterSpec extends munit.FunSuite {
     )
   }
 
-  test("write list of Address using name provided by xmlName and xmlItemTag annotations on a value") {
-    @xmlName("A")
+  test("write list of Address using name provided by xmlTag and xmlItemTag annotations on a value") {
+    @xmlTag("A")
     @xmlItemTag("B")
     val entity = List(TestData.address1, TestData.address2)
 
@@ -324,8 +334,8 @@ class MacroXmlWriterSpec extends munit.FunSuite {
     )
   }
 
-  test("write list of Address using name provided by xmlName and xmlNoItemTags annotations on a value") {
-    @xmlName("A")
+  test("write list of Address using name provided by xmlTag and xmlNoItemTags annotations on a value") {
+    @xmlTag("A")
     @xmlNoItemTags
     val entity = List(TestData.address1, TestData.address2)
 
@@ -376,7 +386,7 @@ class MacroXmlWriterSpec extends munit.FunSuite {
          |        <tag name="tag1&quot;">value1</tag>
          |        <tag name="&lt;tag2&gt;">value2</tag>
          |    </tags>
-         |    <citizenship>UK</citizenship>
+         |    <citizenship>United Kingdom</citizenship>
          |    <current-immigration-status>permanent resident</current-immigration-status>
          |    <immigration-status-valid-until>2026-01-01</immigration-status-valid-until>
          |    <marital>
@@ -389,11 +399,9 @@ class MacroXmlWriterSpec extends munit.FunSuite {
          |    <hobbies>
          |        <Hobby>Swimming</Hobby>
          |        <Hobby>Cooking</Hobby>
-         |        <Hobby>
-         |            <OtherHobby>Binge watching TV series</OtherHobby>
-         |        </Hobby>
+         |        <Hobby>Binge watching TV series</Hobby>
          |    </hobbies>
-         |    <OtherHobby>Playing guitar</OtherHobby>
+         |    <hobby>Playing guitar</hobby>
          |    <passportNumber>1234567890</passportNumber>
          |    <driverLicense expiryDate="2026-12-31">abcdefghijklm</driverLicense>
          |    <disabilities>
@@ -456,7 +464,7 @@ class MacroXmlWriterSpec extends munit.FunSuite {
 
     assertEquals(
       xml,
-      """<Person ID="1234567890"><name>John Doe</name><age>30</age><stature>188.8</stature><email>john.doe@example.com</email><address><street>123 &lt;Main&gt; St</street><city>&amp;Anytown</city><zipcode>12345</zipcode></address><home><street>123 &lt;Main&gt; St</street><city>&amp;Anytown</city><zipcode>12345</zipcode></home><work><street>456 &lt;Main&gt; St</street><city>&amp;Anytown</city><zipcode>12345</zipcode></work><isStudent>false</isStudent><tags><tag name="tag1&quot;">value1</tag><tag name="&lt;tag2&gt;">value2</tag></tags><citizenship>UK</citizenship><current-immigration-status>permanent resident</current-immigration-status><immigration-status-valid-until>2026-01-01</immigration-status-valid-until><marital><Single></Single><Married><partnerName>Jane Doe</partnerName><from>2025-01-01</from></Married></marital><hobbies><Hobby>Swimming</Hobby><Hobby>Cooking</Hobby><Hobby><OtherHobby>Binge watching TV series</OtherHobby></Hobby></hobbies><OtherHobby>Playing guitar</OtherHobby><passportNumber>1234567890</passportNumber><driverLicense expiryDate="2026-12-31">abcdefghijklm</driverLicense><disabilities><Disability>Blindness</Disability><Disability>Deafness</Disability></disabilities><disability>Blindness</disability><benefits1><Benefit>ChildBenefit</Benefit><Benefit>UniversalCredit</Benefit></benefits1><benefits2>false</benefits2><skills><skill>Java</skill><skill>Scala</skill><skill>Python</skill></skills><wallet><item>123</item><item>John Doe</item><item>2025-01-01</item></wallet><assets><Cars>Ford</Cars><Boats><boat>Brave Wave</boat><boat>Sharky</boat></Boats><Planes><Airbus><model>A380</model></Airbus></Planes></assets><books><book><author>Francis Scott Fitzgerald</author><title>The Great Gatsby</title></book><book><author>Harper Lee</author><title>To Kill a Mockingbird</title></book></books><bookAtDesk><author>A.A. Milne</author><title>Winnie the Pooh</title></bookAtDesk><hand1>Left hand</hand1><hand2>Right hand</hand2><status>PENDING</status></Person>""".stripMargin
+      """<Person ID="1234567890"><name>John Doe</name><age>30</age><stature>188.8</stature><email>john.doe@example.com</email><address><street>123 &lt;Main&gt; St</street><city>&amp;Anytown</city><zipcode>12345</zipcode></address><home><street>123 &lt;Main&gt; St</street><city>&amp;Anytown</city><zipcode>12345</zipcode></home><work><street>456 &lt;Main&gt; St</street><city>&amp;Anytown</city><zipcode>12345</zipcode></work><isStudent>false</isStudent><tags><tag name="tag1&quot;">value1</tag><tag name="&lt;tag2&gt;">value2</tag></tags><citizenship>United Kingdom</citizenship><current-immigration-status>permanent resident</current-immigration-status><immigration-status-valid-until>2026-01-01</immigration-status-valid-until><marital><Single></Single><Married><partnerName>Jane Doe</partnerName><from>2025-01-01</from></Married></marital><hobbies><Hobby>Swimming</Hobby><Hobby>Cooking</Hobby><Hobby>Binge watching TV series</Hobby></hobbies><hobby>Playing guitar</hobby><passportNumber>1234567890</passportNumber><driverLicense expiryDate="2026-12-31">abcdefghijklm</driverLicense><disabilities><Disability>Blindness</Disability><Disability>Deafness</Disability></disabilities><disability>Blindness</disability><benefits1><Benefit>ChildBenefit</Benefit><Benefit>UniversalCredit</Benefit></benefits1><benefits2>false</benefits2><skills><skill>Java</skill><skill>Scala</skill><skill>Python</skill></skills><wallet><item>123</item><item>John Doe</item><item>2025-01-01</item></wallet><assets><Cars>Ford</Cars><Boats><boat>Brave Wave</boat><boat>Sharky</boat></Boats><Planes><Airbus><model>A380</model></Airbus></Planes></assets><books><book><author>Francis Scott Fitzgerald</author><title>The Great Gatsby</title></book><book><author>Harper Lee</author><title>To Kill a Mockingbird</title></book></books><bookAtDesk><author>A.A. Milne</author><title>Winnie the Pooh</title></bookAtDesk><hand1>Left hand</hand1><hand2>Right hand</hand2><status>PENDING</status></Person>""".stripMargin
     )
   }
 
@@ -493,7 +501,7 @@ class MacroXmlWriterSpec extends munit.FunSuite {
          |        <tag name="tag1&quot;">value1</tag>
          |        <tag name="&lt;tag2&gt;">value2</tag>
          |    </tags>
-         |    <citizenship>UK</citizenship>
+         |    <citizenship>United Kingdom</citizenship>
          |    <current-immigration-status>permanent resident</current-immigration-status>
          |    <immigration-status-valid-until>2026-01-01</immigration-status-valid-until>
          |    <marital>
@@ -506,11 +514,9 @@ class MacroXmlWriterSpec extends munit.FunSuite {
          |    <hobbies>
          |        <Hobby>Swimming</Hobby>
          |        <Hobby>Cooking</Hobby>
-         |        <Hobby>
-         |            <OtherHobby>Binge watching TV series</OtherHobby>
-         |        </Hobby>
+         |        <Hobby>Binge watching TV series</Hobby>
          |    </hobbies>
-         |    <OtherHobby>Playing guitar</OtherHobby>
+         |    <hobby>Playing guitar</hobby>
          |    <passportNumber>1234567890</passportNumber>
          |    <driverLicense expiryDate="2026-12-31">abcdefghijklm</driverLicense>
          |    <disabilities>
@@ -576,7 +582,7 @@ class MacroXmlWriterSpec extends munit.FunSuite {
 
     assertEquals(
       xml,
-      """<Person ID="1234567890"><name>John Doe</name><age>30</age><stature>188.8</stature><email>john.doe@example.com</email><address><street>123 &lt;Main&gt; St</street><city>&amp;Anytown</city><zipcode>12345</zipcode></address><home><street>123 &lt;Main&gt; St</street><city>&amp;Anytown</city><zipcode>12345</zipcode></home><work><street>456 &lt;Main&gt; St</street><city>&amp;Anytown</city><zipcode>12345</zipcode></work><isStudent>false</isStudent><tags><tag name="tag1&quot;">value1</tag><tag name="&lt;tag2&gt;">value2</tag></tags><citizenship>UK</citizenship><current-immigration-status>permanent resident</current-immigration-status><immigration-status-valid-until>2026-01-01</immigration-status-valid-until><marital><Single></Single><Married><partnerName>Jane Doe</partnerName><from>2025-01-01</from></Married></marital><hobbies><Hobby>Swimming</Hobby><Hobby>Cooking</Hobby><Hobby><OtherHobby>Binge watching TV series</OtherHobby></Hobby></hobbies><OtherHobby>Playing guitar</OtherHobby><passportNumber>1234567890</passportNumber><driverLicense expiryDate="2026-12-31">abcdefghijklm</driverLicense><disabilities><Disability>Blindness</Disability><Disability>Deafness</Disability></disabilities><disability>Blindness</disability><benefits1><Benefit>ChildBenefit</Benefit><Benefit>UniversalCredit</Benefit></benefits1><benefits2>false</benefits2><skills><skill>Java</skill><skill>Scala</skill><skill>Python</skill></skills><wallet><item>123</item><item>John Doe</item><item>2025-01-01</item></wallet><assets><Cars>Ford</Cars><Boats><boat>Brave Wave</boat><boat>Sharky</boat></Boats><Planes><Airbus><model>A380</model></Airbus></Planes></assets><books><book><author>Francis Scott Fitzgerald</author><title>The Great Gatsby</title></book><book><author>Harper Lee</author><title>To Kill a Mockingbird</title></book></books><bookAtDesk><author>A.A. Milne</author><title>Winnie the Pooh</title></bookAtDesk><hand1>Left hand</hand1><hand2>Right hand</hand2><status>PENDING</status></Person>""".stripMargin
+      """<Person ID="1234567890"><name>John Doe</name><age>30</age><stature>188.8</stature><email>john.doe@example.com</email><address><street>123 &lt;Main&gt; St</street><city>&amp;Anytown</city><zipcode>12345</zipcode></address><home><street>123 &lt;Main&gt; St</street><city>&amp;Anytown</city><zipcode>12345</zipcode></home><work><street>456 &lt;Main&gt; St</street><city>&amp;Anytown</city><zipcode>12345</zipcode></work><isStudent>false</isStudent><tags><tag name="tag1&quot;">value1</tag><tag name="&lt;tag2&gt;">value2</tag></tags><citizenship>United Kingdom</citizenship><current-immigration-status>permanent resident</current-immigration-status><immigration-status-valid-until>2026-01-01</immigration-status-valid-until><marital><Single></Single><Married><partnerName>Jane Doe</partnerName><from>2025-01-01</from></Married></marital><hobbies><Hobby>Swimming</Hobby><Hobby>Cooking</Hobby><Hobby>Binge watching TV series</Hobby></hobbies><hobby>Playing guitar</hobby><passportNumber>1234567890</passportNumber><driverLicense expiryDate="2026-12-31">abcdefghijklm</driverLicense><disabilities><Disability>Blindness</Disability><Disability>Deafness</Disability></disabilities><disability>Blindness</disability><benefits1><Benefit>ChildBenefit</Benefit><Benefit>UniversalCredit</Benefit></benefits1><benefits2>false</benefits2><skills><skill>Java</skill><skill>Scala</skill><skill>Python</skill></skills><wallet><item>123</item><item>John Doe</item><item>2025-01-01</item></wallet><assets><Cars>Ford</Cars><Boats><boat>Brave Wave</boat><boat>Sharky</boat></Boats><Planes><Airbus><model>A380</model></Airbus></Planes></assets><books><book><author>Francis Scott Fitzgerald</author><title>The Great Gatsby</title></book><book><author>Harper Lee</author><title>To Kill a Mockingbird</title></book></books><bookAtDesk><author>A.A. Milne</author><title>Winnie the Pooh</title></bookAtDesk><hand1>Left hand</hand1><hand2>Right hand</hand2><status>PENDING</status></Person>""".stripMargin
     )
   }
 
@@ -616,7 +622,7 @@ class MacroXmlWriterSpec extends munit.FunSuite {
          |        <tag name="tag1&quot;">value1</tag>
          |        <tag name="&lt;tag2&gt;">value2</tag>
          |    </tags>
-         |    <citizenship>UK</citizenship>
+         |    <citizenship>United Kingdom</citizenship>
          |    <current-immigration-status>permanent resident</current-immigration-status>
          |    <immigration-status-valid-until>2026-01-01</immigration-status-valid-until>
          |    <marital>
@@ -629,11 +635,9 @@ class MacroXmlWriterSpec extends munit.FunSuite {
          |    <hobbies>
          |        <hobby>Swimming</hobby>
          |        <hobby>Cooking</hobby>
-         |        <hobby>
-         |            <otherhobby>Binge watching TV series</otherhobby>
-         |        </hobby>
+         |        <hobby>Binge watching TV series</hobby>
          |    </hobbies>
-         |    <otherhobby>Playing guitar</otherhobby>
+         |    <hobby>Playing guitar</hobby>
          |    <passportnumber>1234567890</passportnumber>
          |    <driverlicense expirydate="2026-12-31">abcdefghijklm</driverlicense>
          |    <disabilities>
@@ -701,7 +705,7 @@ class MacroXmlWriterSpec extends munit.FunSuite {
 
     assertEquals(
       xml,
-      """<PERSON id="1234567890"><NAME>John Doe</NAME><AGE>30</AGE><STATURE>188.8</STATURE><EMAIL>john.doe@example.com</EMAIL><ADDRESS><STREET>123 &lt;Main&gt; St</STREET><CITY>&amp;Anytown</CITY><ZIPCODE>12345</ZIPCODE></ADDRESS><HOME><STREET>123 &lt;Main&gt; St</STREET><CITY>&amp;Anytown</CITY><ZIPCODE>12345</ZIPCODE></HOME><WORK><STREET>456 &lt;Main&gt; St</STREET><CITY>&amp;Anytown</CITY><ZIPCODE>12345</ZIPCODE></WORK><ISSTUDENT>false</ISSTUDENT><TAGS><TAG name="tag1&quot;">value1</TAG><TAG name="&lt;tag2&gt;">value2</TAG></TAGS><CITIZENSHIP>UK</CITIZENSHIP><CURRENT-IMMIGRATION-STATUS>permanent resident</CURRENT-IMMIGRATION-STATUS><IMMIGRATION-STATUS-VALID-UNTIL>2026-01-01</IMMIGRATION-STATUS-VALID-UNTIL><MARITAL><SINGLE></SINGLE><MARRIED><PARTNERNAME>Jane Doe</PARTNERNAME><FROM>2025-01-01</FROM></MARRIED></MARITAL><HOBBIES><HOBBY>Swimming</HOBBY><HOBBY>Cooking</HOBBY><HOBBY><OTHERHOBBY>Binge watching TV series</OTHERHOBBY></HOBBY></HOBBIES><OTHERHOBBY>Playing guitar</OTHERHOBBY><PASSPORTNUMBER>1234567890</PASSPORTNUMBER><DRIVERLICENSE expirydate="2026-12-31">abcdefghijklm</DRIVERLICENSE><DISABILITIES><DISABILITY>Blindness</DISABILITY><DISABILITY>Deafness</DISABILITY></DISABILITIES><DISABILITY>Blindness</DISABILITY><BENEFITS1><BENEFIT>ChildBenefit</BENEFIT><BENEFIT>UniversalCredit</BENEFIT></BENEFITS1><BENEFITS2>false</BENEFITS2><SKILLS><SKILL>Java</SKILL><SKILL>Scala</SKILL><SKILL>Python</SKILL></SKILLS><WALLET><ITEM>123</ITEM><ITEM>John Doe</ITEM><ITEM>2025-01-01</ITEM></WALLET><ASSETS><CARS>Ford</CARS><BOATS><BOAT>Brave Wave</BOAT><BOAT>Sharky</BOAT></BOATS><PLANES><AIRBUS><MODEL>A380</MODEL></AIRBUS></PLANES></ASSETS><BOOKS><BOOK><AUTHOR>Francis Scott Fitzgerald</AUTHOR><TITLE>The Great Gatsby</TITLE></BOOK><BOOK><AUTHOR>Harper Lee</AUTHOR><TITLE>To Kill a Mockingbird</TITLE></BOOK></BOOKS><BOOKATDESK><AUTHOR>A.A. Milne</AUTHOR><TITLE>Winnie the Pooh</TITLE></BOOKATDESK><HAND1>Left hand</HAND1><HAND2>Right hand</HAND2><STATUS>PENDING</STATUS></PERSON>""".stripMargin
+      """<PERSON id="1234567890"><NAME>John Doe</NAME><AGE>30</AGE><STATURE>188.8</STATURE><EMAIL>john.doe@example.com</EMAIL><ADDRESS><STREET>123 &lt;Main&gt; St</STREET><CITY>&amp;Anytown</CITY><ZIPCODE>12345</ZIPCODE></ADDRESS><HOME><STREET>123 &lt;Main&gt; St</STREET><CITY>&amp;Anytown</CITY><ZIPCODE>12345</ZIPCODE></HOME><WORK><STREET>456 &lt;Main&gt; St</STREET><CITY>&amp;Anytown</CITY><ZIPCODE>12345</ZIPCODE></WORK><ISSTUDENT>false</ISSTUDENT><TAGS><TAG name="tag1&quot;">value1</TAG><TAG name="&lt;tag2&gt;">value2</TAG></TAGS><CITIZENSHIP>United Kingdom</CITIZENSHIP><CURRENT-IMMIGRATION-STATUS>permanent resident</CURRENT-IMMIGRATION-STATUS><IMMIGRATION-STATUS-VALID-UNTIL>2026-01-01</IMMIGRATION-STATUS-VALID-UNTIL><MARITAL><SINGLE></SINGLE><MARRIED><PARTNERNAME>Jane Doe</PARTNERNAME><FROM>2025-01-01</FROM></MARRIED></MARITAL><HOBBIES><HOBBY>Swimming</HOBBY><HOBBY>Cooking</HOBBY><HOBBY>Binge watching TV series</HOBBY></HOBBIES><HOBBY>Playing guitar</HOBBY><PASSPORTNUMBER>1234567890</PASSPORTNUMBER><DRIVERLICENSE expirydate="2026-12-31">abcdefghijklm</DRIVERLICENSE><DISABILITIES><DISABILITY>Blindness</DISABILITY><DISABILITY>Deafness</DISABILITY></DISABILITIES><DISABILITY>Blindness</DISABILITY><BENEFITS1><BENEFIT>ChildBenefit</BENEFIT><BENEFIT>UniversalCredit</BENEFIT></BENEFITS1><BENEFITS2>false</BENEFITS2><SKILLS><SKILL>Java</SKILL><SKILL>Scala</SKILL><SKILL>Python</SKILL></SKILLS><WALLET><ITEM>123</ITEM><ITEM>John Doe</ITEM><ITEM>2025-01-01</ITEM></WALLET><ASSETS><CARS>Ford</CARS><BOATS><BOAT>Brave Wave</BOAT><BOAT>Sharky</BOAT></BOATS><PLANES><AIRBUS><MODEL>A380</MODEL></AIRBUS></PLANES></ASSETS><BOOKS><BOOK><AUTHOR>Francis Scott Fitzgerald</AUTHOR><TITLE>The Great Gatsby</TITLE></BOOK><BOOK><AUTHOR>Harper Lee</AUTHOR><TITLE>To Kill a Mockingbird</TITLE></BOOK></BOOKS><BOOKATDESK><AUTHOR>A.A. Milne</AUTHOR><TITLE>Winnie the Pooh</TITLE></BOOKATDESK><HAND1>Left hand</HAND1><HAND2>Right hand</HAND2><STATUS>PENDING</STATUS></PERSON>""".stripMargin
     )
   }
 
@@ -902,7 +906,7 @@ class MacroXmlWriterSpec extends munit.FunSuite {
         @xmlContent value: String
     )
 
-    @xmlName("Bookshelf")
+    @xmlTag("Bookshelf")
     case class Library(
         @xmlAttribute libraryId: String,
         name: String,

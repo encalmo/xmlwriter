@@ -1,6 +1,6 @@
 //> using scala 3.7.4
 //> using exclude scripts
-//> using dep org.encalmo::macro-utils:0.9.0
+//> using dep org.encalmo::macro-utils:0.9.2
 //> using test.dep org.scalameta::munit:1.2.1
 //> using test.toolkit 0.8.0
 //> using option -Xmax-inlines 128

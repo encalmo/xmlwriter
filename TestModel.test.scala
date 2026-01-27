@@ -4,7 +4,7 @@ import org.encalmo.writer.xml.annotation.*
 import java.time.LocalDate
 
 case class Person(
-    @xmlAttribute @xmlName("ID") id: String,
+    @xmlAttribute @xmlTag("ID") id: String,
     name: Name,
     age: Int,
     stature: Double,
@@ -15,7 +15,7 @@ case class Person(
     tags: List[tag],
     citizenship: Citizenship,
     immigrationStatus: Option[ImmigrationStatus],
-    @xmlName("marital") @xmlNoItemTags maritalStatus: Array[
+    @xmlTag("marital") @xmlNoItemTags maritalStatus: Array[
       MaritalStatus
     ],
     hobbies: List[Hobby],
@@ -37,7 +37,7 @@ case class Person(
 )
 
 enum Citizenship {
-  case UK
+  @xmlValue("United Kingdom") case UK
   case other
 }
 
@@ -49,7 +49,7 @@ case class tag(
 case class Address(
     street: String,
     city: String,
-    @xmlName("zipcode") postcode: String
+    @xmlTag("zipcode") postcode: String
 )
 
 trait ImmigrationStatus {
@@ -70,20 +70,7 @@ enum Hobby {
   case Swimming
   case Cycling
   case Cooking
-  case Other(name: String)
-}
-
-object Hobby {
-  given XmlWriter[Hobby.Other] =
-    new XmlWriter[Hobby.Other] {
-      def write(name: String, value: Hobby.Other, createTag: Boolean)(using
-          builder: XmlOutputBuilder
-      ): Unit = {
-        if createTag then builder.appendElementStart("OtherHobby")
-        builder.appendText(value.name)
-        if createTag then builder.appendElementEnd("OtherHobby")
-      }
-    }
+  @xmlNoTagInsideCollection @xmlValueSelector("name") case Other(name: String)
 }
 
 object ImmigrationStatus {
@@ -170,7 +157,7 @@ object Boats {
   def apply(values: String*): Boats = values.toSet
 }
 
-sealed trait Planes
+@xmlUseEnumCaseNames sealed trait Planes
 case class Boeing(model: String) extends Planes
 case class Airbus(model: String) extends Planes
 

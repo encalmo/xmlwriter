@@ -34,7 +34,7 @@ object MacroXmlWriter {
       label: Expr[String],
       expr: Expr[A],
       builder: Expr[XmlOutputBuilder],
-      trySummonInstance: Boolean
+      summonTypeclassInstance: Boolean
   )(using
       Quotes
   ): Expr[Unit] = {
@@ -57,7 +57,7 @@ object MacroXmlWriter {
       currentAnnotations = annotations,
       trace = trace,
       debugIndent = 0,
-      trySummonInstance = trySummonInstance
+      summonTypeclassInstance = summonTypeclassInstance
     )
     if shouldDebugMacroExpansion then report.warning(trace.mkString("\n"))
     result
@@ -75,17 +75,24 @@ object MacroXmlWriter {
       currentAnnotations: Set[AnnotationInfo],
       trace: scala.collection.mutable.Buffer[String],
       debugIndent: Int,
-      trySummonInstance: Boolean = true
+      summonTypeclassInstance: Boolean = true
   ): Expr[Unit] = {
     import quotes.reflect.*
 
-    val tagName = currentAnnotations.getOrDefault[annotation.xmlName, String](
-      parameter = "name",
-      defaultValue = label
-    )
+    val tagName: Expr[String] = currentAnnotations
+      .getOrDefault[annotation.xmlTag, String](
+        parameter = "name",
+        defaultValue = label
+      )
 
-    val isXmlContent = currentAnnotations.exists[annotation.xmlContent]
-    val shouldTag = !hasTag && !isXmlContent
+    val isXmlContent: Boolean = currentAnnotations.exists[annotation.xmlContent]
+    val shouldTag: Boolean = !hasTag && !isXmlContent
+
+    val maybeTagValue: Option[Expr[String]] = currentAnnotations
+      .get[annotation.xmlValue, String](parameter = "value")
+
+    val maybeTagValueSelector: Option[Expr[String]] = currentAnnotations
+      .get[annotation.xmlValueSelector, String](parameter = "property")
 
     if shouldDebugMacroExpansion then
       tagName.value
@@ -101,7 +108,7 @@ object MacroXmlWriter {
           )
         )
 
-    def buildWriter = {
+    def generateWriterExpressions = {
       if TypeRepr.of[A].dealias.typeSymbol.isTypeParam then
         report.errorAndAbort(
           s"""${TypeRepr
@@ -347,9 +354,55 @@ object MacroXmlWriter {
         }
     }
 
-    if (trySummonInstance) then
+    def tryStaticValueOrSelectorExpression = {
+      maybeTagValue match {
+        case Some(value) =>
+          debug(trace, debugIndent, tagName.value.getOrElse("unknown"), "writeXmlValue", hasTag)
+          '{
+            if ${ Expr(shouldTag) } then ${ builder }.appendElementStart(${ tagName })
+            ${ builder }.appendText(${ value })
+            if ${ Expr(shouldTag) } then ${ builder }.appendElementEnd(${ tagName })
+          }
+
+        case None =>
+          maybeTagValueSelector.flatMap(_.value).match {
+            case Some(selector) => {
+              MethodUtils.maybeSelectedValue[A](
+                selector = selector,
+                label = label,
+                expr = expr,
+                functionExpr = { [A: Type] => Quotes ?=> (name, value) =>
+                  debug(
+                    trace,
+                    debugIndent,
+                    name.value.getOrElse("unknown"),
+                    "writeType " + TypeRepr.of[A].show(using Printer.TypeReprShortCode)
+                      + " selected by " + selector,
+                    hasTag
+                  )
+                  writeType[A](
+                    label = label,
+                    expr = value,
+                    builder = builder,
+                    hasTag = hasTag,
+                    isCollectionItem = isCollectionItem,
+                    currentAnnotations = currentAnnotations,
+                    trace = trace,
+                    debugIndent = debugIndent + 1
+                  )
+                },
+                fallbackExpr = {
+                  generateWriterExpressions
+                }
+              )
+            }
+            case None => generateWriterExpressions
+          }
+      }
+    }
+
+    if (summonTypeclassInstance) then
       Expr.summon[XmlWriter[A]] match {
-        // use custom XmlWriter instance if it exists
         case Some(writer) =>
           debug(
             trace,
@@ -362,11 +415,10 @@ object MacroXmlWriter {
             ${ writer }.write(${ tagName }, ${ expr }, ${ Expr(shouldTag) })(using ${ builder })
           }
 
-        // build and inline writer code
-        case None =>
-          buildWriter
+        case None => tryStaticValueOrSelectorExpression
       }
-    else buildWriter
+    else tryStaticValueOrSelectorExpression
+
   }
 
   def collectAttributesFromCaseClass[A: Type](using
@@ -383,10 +435,10 @@ object MacroXmlWriter {
         expr,
         { [B: Type] => Quotes ?=> (name, value, annotations) =>
           {
-            // if the field is annotated with @xmlName,
+            // if the field is annotated with @xmlTag,
             // then use the name from the annotation
             val label = annotations
-              .getOrDefault[annotation.xmlName, String](
+              .getOrDefault[annotation.xmlTag, String](
                 parameter = "name",
                 defaultValue = name
               )
@@ -460,19 +512,29 @@ object MacroXmlWriter {
   )(using Quotes): Expr[Unit] = {
     import quotes.reflect.*
     debug(trace, debugIndent, label.value.getOrElse("unknown"), "writeEnum", hasTag)
+    val typeAnnotations = AnnotationUtils.annotationsOf[A]
     MethodUtils.wrapInMethodCall(
       "writeEnumToXml_" + TypeNameUtils.underscored(TypeRepr.of[A].show),
       // visit the case class and write each field
       EnumUtils.visit[A](
         valueExpr = expr,
         functionWhenCaseValueExpr = { [B: Type] => Quotes ?=> (name, value, annotations) =>
+          val allAnnotations = typeAnnotations ++ currentAnnotations ++ annotations.computeInfo
+
           debug(
             trace,
             debugIndent,
             label.value.getOrElse("unknown") + "." + name.value.getOrElse("unknown"),
-            "functionWhenCaseValueExpr",
+            allAnnotations.map(_.toString).mkString("", " ", " ") + "functionWhenCaseValueExpr",
             hasTag
           )
+
+          val tagValue: Expr[String] = allAnnotations
+            .getOrDefault[annotation.xmlValue, String](
+              parameter = "value",
+              defaultValue = '{ ${ expr }.toString }
+            )
+
           if hasTag then {
             if isCollectionItem then {
               '{
@@ -480,34 +542,42 @@ object MacroXmlWriter {
                 ${ builder }.appendElementEnd(${ name })
               }
             } else {
-              '{ ${ builder }.appendText(${ expr }.toString) }
+              '{ ${ builder }.appendText(${ tagValue }) }
             }
           } else {
             '{
               ${ builder }.appendElementStart(${ label })
-              ${ builder }.appendText(${ expr }.toString)
+              ${ builder }.appendText(${ tagValue })
               ${ builder }.appendElementEnd(${ label })
             }
           }
         },
         functionWhenCaseClassExpr = { [B: Type] => Quotes ?=> (name, value, annotations) =>
+          val allAnnotations = typeAnnotations ++ currentAnnotations ++ annotations.computeInfo
+
           debug(
             trace,
             debugIndent,
             label.value.getOrElse("unknown") + "." + name.value.getOrElse("unknown"),
-            "functionWhenCaseClassExpr",
+            allAnnotations
+              .map(_.toString)
+              .mkString("", " ", " ") + "functionWhenCaseClassExpr isCollectionItem=" + isCollectionItem,
             hasTag
           )
+
           val body = writeType[B](
             label = name,
             expr = value,
             builder = builder,
             hasTag = hasTag,
             isCollectionItem = isCollectionItem,
-            currentAnnotations = AnnotationUtils.annotationsOf[B] ++ annotations.computeInfo,
+            currentAnnotations = allAnnotations,
             trace = trace,
             debugIndent = debugIndent + 1
           )
+
+          val useEnumCaseNames = allAnnotations.exists[annotation.xmlUseEnumCaseNames]
+          val skipTagInsideCollection = allAnnotations.exists[annotation.xmlNoTagInsideCollection]
 
           if hasTag then {
             if isCollectionItem then {
@@ -520,14 +590,24 @@ object MacroXmlWriter {
               body
             }
           } else {
-            if isCollectionItem then {
+            if isCollectionItem && !skipTagInsideCollection then {
               '{
                 ${ builder }.appendElementStart(${ label })
                 ${ body }
                 ${ builder }.appendElementEnd(${ label })
               }
             } else {
-              body
+              writeType[B](
+                label = if useEnumCaseNames then name else label,
+                expr = value,
+                builder = builder,
+                hasTag = hasTag,
+                isCollectionItem = isCollectionItem,
+                currentAnnotations = allAnnotations,
+                trace = trace,
+                debugIndent = debugIndent + 1
+              )
+
             }
           }
         }
@@ -683,7 +763,7 @@ object MacroXmlWriter {
             builder = builder,
             hasTag = skipItemTags,
             isCollectionItem = true,
-            currentAnnotations = getValueAnnotations('{ value }) ++ AnnotationUtils.annotationsOf[A],
+            currentAnnotations = AnnotationUtils.annotationsOf[A] ++ getValueAnnotations('{ value }),
             trace = trace,
             debugIndent = debugIndent + 1
           )
@@ -715,7 +795,7 @@ object MacroXmlWriter {
             builder = builder,
             hasTag = false,
             isCollectionItem = true,
-            currentAnnotations = AnnotationUtils.annotationsOf[V],
+            currentAnnotations = AnnotationUtils.annotationsOf[V] ++ getValueAnnotations('{ value }),
             trace = trace,
             debugIndent = debugIndent + 1
           )
@@ -763,7 +843,7 @@ object MacroXmlWriter {
                 builder = builder,
                 hasTag = hasTag,
                 isCollectionItem = true,
-                currentAnnotations = currentAnnotations,
+                currentAnnotations = AnnotationUtils.annotationsOf[A] ++ getValueAnnotations('{ value }),
                 trace = trace,
                 debugIndent = debugIndent + 1
               )
@@ -800,7 +880,7 @@ object MacroXmlWriter {
             builder = builder,
             hasTag = hasTag,
             isCollectionItem = isCollectionItem,
-            currentAnnotations = currentAnnotations,
+            currentAnnotations = AnnotationUtils.annotationsOf[V] ++ getValueAnnotations('{ value }),
             trace = trace,
             debugIndent = debugIndent + 1
           )
@@ -936,7 +1016,7 @@ object MacroXmlWriter {
           builder = builder,
           hasTag = hasTag,
           isCollectionItem = isCollectionItem,
-          currentAnnotations = currentAnnotations,
+          currentAnnotations = AnnotationUtils.annotationsOf[A] ++ currentAnnotations,
           trace = trace,
           debugIndent = debugIndent + 1
         )
