@@ -672,14 +672,18 @@ object MacroXmlWriter {
       debugIndent: Int
   ): Expr[Unit] =
     debug(trace, debugIndent, label.value.getOrElse("unknown"), "writeOption", hasTag)
+
+    val itemLabel =
+      if isCollectionItem && label.value.getOrElse("unknown") == "Option"
+      then typeNameExpr[A]
+      else label
+
     '{
       ${ expr } match {
         case Some(value) =>
           ${
             writeType[A](
-              label = '{
-                if (${ Expr(isCollectionItem) } && ${ label } == "Option") then ${ typeNameExpr[A] } else ${ label }
-              },
+              label = itemLabel,
               expr = '{ value },
               builder = builder,
               hasTag = hasTag,
@@ -750,7 +754,6 @@ object MacroXmlWriter {
       currentAnnotations: Set[AnnotationInfo],
       debugIndent: Int
   ): Expr[Unit] = {
-    debug(trace, debugIndent, label.value.getOrElse("unknown"), "writeCollection", hasTag)
     // get the name of the item tag from the annotation or default to the type name
     val itemLabel =
       currentAnnotations.getOrDefault[annotation.xmlItemTag, String](
@@ -760,7 +763,15 @@ object MacroXmlWriter {
     // check if the item tags should be skipped
     val skipItemTags = currentAnnotations.exists[annotation.xmlNoItemTags]
     val isXmlContent = currentAnnotations.exists[annotation.xmlContent]
-    val shouldTag = !hasTag && !isXmlContent
+    val shouldTag = !hasTag && !isXmlContent && !(label.value == itemLabel.value && !skipItemTags)
+
+    debug(
+      trace,
+      debugIndent,
+      label.value.getOrElse("unknown"),
+      "writeCollection of " + itemLabel.value.getOrElse("unknown") + " shouldTag=" + shouldTag,
+      hasTag
+    )
 
     '{
       if (${ Expr(shouldTag) }) then ${ builder }.appendElementStart(${ label })
@@ -837,7 +848,7 @@ object MacroXmlWriter {
     // check if the item tags should be skipped
     val skipItemTags = currentAnnotations.exists[annotation.xmlNoItemTags]
     val isXmlContent = currentAnnotations.exists[annotation.xmlContent]
-    val shouldTag = !hasTag && !isXmlContent
+    val shouldTag = !hasTag && !isXmlContent && !(label.value == itemLabel.value && !skipItemTags)
 
     TypeRepr.of[A].dealias.asType match {
       case '[t] =>
