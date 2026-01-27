@@ -214,11 +214,11 @@ Annotations can be placed on types, fields, values and enum cases.
 
 Use with SBT
 
-    libraryDependencies += "org.encalmo" %% "xmlwriter" % "0.9.1"
+    libraryDependencies += "org.encalmo" %% "xmlwriter" % "0.9.3"
 
 or with SCALA-CLI
 
-    //> using dep org.encalmo::xmlwriter:0.9.1
+    //> using dep org.encalmo::xmlwriter:0.9.3
 
 ## More examples
 
