@@ -4,6 +4,19 @@
 
 Macro-powered fast and easy XML serialization library for Scala 3.
 
+## Table of contents
+
+- [Example usage](#example-usage)
+- [Oustanding features](#oustanding-features)
+- [Scala types supported directly without the need for typeclass derivation](#scala-types-supported-directly-without-the-need-for-typeclass-derivation)
+- [Supported Java types (when imported into Scala):](#supported-java-types-(when-imported-into-scala):)
+- [Supported annotations](#supported-annotations)
+   - [Notes](#notes)
+- [Dependencies](#dependencies)
+- [Usage](#usage)
+- [More examples](#more-examples)
+- [Project content](#project-content)
+
 ## Example usage
 
 ```scala
@@ -133,19 +146,6 @@ val xml: String = {
 println(xml)
 ```
 
-## Table of contents
-
-- [Example usage](#example-usage)
-- [Oustanding features](#oustanding-features)
-- [Scala types supported directly without the need for typeclass derivation](#scala-types-supported-directly-without-the-need-for-typeclass-derivation)
-- [Supported Java types (when imported into Scala):](#supported-java-types-(when-imported-into-scala):)
-- [Supported annotations](#supported-annotations)
-   - [Notes](#notes)
-- [Dependencies](#dependencies)
-- [Usage](#usage)
-- [More examples](#more-examples)
-- [Project content](#project-content)
-
 ## Oustanding features
 - **Genarates highly performant low-level code** 
 - Supports **field, value, case and type annotations** enabling fine-tuning of the resulting XML,
@@ -155,6 +155,7 @@ println(xml)
 - Extensible to custom types via **typeclass** instances,
 - Can automatically **derive** `XmlWriter` typeclass if requested,
 - Invokes `toString()` as a **fallback** strategy when type is not supported directly or does not have XmlWriter instance in scope.
+- Decouples data structure traversal (`XmlWriter`) from output assembly (`XmlOutputBuilder`)
 
 ## Scala types supported directly without the need for typeclass derivation
 - **Case classes** and nested case classes (including recursive, deeply nested types)
@@ -169,15 +170,14 @@ println(xml)
 - All standard **Scala primitive types**: `Int`, `Long`, `Double`, `Float`, `Boolean`, `Char`, `Short`, `Byte` and **`String`**
 - **Big number types**: `BigInt`, `BigDecimal`
 
-## Supported Java types (when imported into Scala):
+## Supported Java types:
 - **Java boxed primitives:** `java.lang.Integer`, `java.lang.Long`, `java.lang.Double`, etc.
 - **Java records**
 - **Java enums**
-- **Java iterables:** Support for `java.util.List`, `java.util.Set`, and other iterables
-- **Java maps:** Support for `java.util.Map` and subclasses
+- **Java iterables:** support for `java.util.List`, `java.util.Set`, and other iterables
+- **Java maps:** support for `java.util.Map` and subclasses
 
 ## Supported annotations
-
 Annotations can be placed on types, fields, values and enum cases.
 
 | Annotation            | Description                                                                                           |
@@ -192,12 +192,17 @@ Annotations can be placed on types, fields, values and enum cases.
 | `@xmlValue`           | Defines static value for an element, useful for enum cases     |
 | `@xmlValueSelector`   | Selects which member/field/property from a nested type is used as the value/text for this element.    |              |
 
-
 ### Notes
 - All annotations are defined in `org.encalmo.writer.xml.annotation`.
 - Annotations can be used in any combination on case class fields or sealed trait members.
 - Custom tag and attribute names are only required when you want to override defaults.
 
+## Key abstractions
+
+- object [`XmlWriter`](XmlWriter.scala) provides the main user-facing API, host of methods to serialize data types to XML,
+- trait `XmlWriter[T]` defines typeclass interface,
+- trait [`XmlOutputBuilder`](XmlOutputBuilder.scala) defines low-level API for constructing XML output,
+- object `XmlOutputBuilder` provides set of default implementations of `XmlOutputBuilder` trait producing indented or compact format, building a `String` or writing directly to the `java.io.OutputStream`
 
 ## Dependencies
 
