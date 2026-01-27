@@ -29,7 +29,7 @@ Output:
 - [Oustanding features](#oustanding-features)
 - [Scala types supported directly without the need for typeclass derivation](#scala-types-supported-directly-without-the-need-for-typeclass-derivation)
 - [Supported Java types (when imported into Scala):](#supported-java-types-(when-imported-into-scala):)
-- [Annotations](#annotations)
+- [Supported annotations](#supported-annotations)
    - [Notes](#notes)
 - [Dependencies](#dependencies)
 - [Usage](#usage)
@@ -90,7 +90,7 @@ Output:
 ## Dependencies
 
    - [Scala](https://www.scala-lang.org) >= 3.7.4
-   - org.encalmo [**macro-utils** 0.9.0](https://central.sonatype.com/artifact/org.encalmo/macro-utils_3)
+   - org.encalmo [**macro-utils** 0.9.2](https://central.sonatype.com/artifact/org.encalmo/macro-utils_3)
 
 ## Usage
 
@@ -273,6 +273,7 @@ Output:
 │
 ├── .gitignore
 ├── .scalafmt.conf
+├── annotation.scala
 ├── LICENSE
 ├── MacroXmlWriter.scala
 ├── MacroXmlWriterSpec.test.scala
