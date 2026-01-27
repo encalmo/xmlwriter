@@ -1,0 +1,29 @@
+name: Run tests
+
+on:
+  workflow_dispatch:  
+  push:
+    paths:
+      - '*.scala' 
+
+permissions:
+  id-token: write # This is required for requesting the JWT
+  contents: write # This is required for actions/checkout
+
+jobs:
+  runTests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: coursier/cache-action@v6
+      - uses: VirtusLab/scala-cli-setup@main
+        with:
+          jvm: adoptium:1.21
+          apps: scala
+          power: true
+      - name: Run tests
+        run: scala test .
+
+      

@@ -1,0 +1,43 @@
+name: Release new version to Sonatype Central
+
+on:
+  workflow_dispatch:
+    inputs: 
+      version-bump:
+        type: choice
+        description: 'How to bump a version?'
+        required: true
+        default: 'patch'
+        options:
+          - major
+          - minor
+          - patch
+          - keep
+  # push:
+  #   branches: [main]
+  #   paths:
+  #     - '*.scala'   
+
+permissions:
+  id-token: write # This is required for requesting the JWT
+  contents: write # This is required for actions/checkout
+  pages: write    # to deploy to Pages
+
+jobs:
+  ReleasePackage:
+    runs-on: ubuntu-latest
+    steps:
+      - id: release
+        name: Create and upload new release bundles
+        uses: encalmo/create-new-release-action@v1.6.1
+        with:
+          tag-prefix: 'version'
+          version-bump: ${{ inputs.version-bump || 'patch' }}
+          release-flags: '--native'
+          github-token:  ${{ secrets.GITHUB_TOKEN }}
+          sonatype-token: ${{ secrets.SONATYPE_TOKEN }}
+          gpg-secret-key-base64: ${{ secrets.GPG_SECRET_KEY }}
+          gpg-secret-key-id: ${{ secrets.GPG_SECRET_KEY_ID }}
+          pages-only: 'false'
+          markdown-paths: 'README.md'
+          

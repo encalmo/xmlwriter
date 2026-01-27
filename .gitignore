@@ -1,0 +1,8 @@
+.bsp/
+.scala-build/
+.metals/
+.vscode/
+.cursor/
+_site/
+.cursor/mcp.json
+*.zip
