@@ -171,7 +171,7 @@ println(xml)
 - All standard **Scala primitive types**: `Int`, `Long`, `Double`, `Float`, `Boolean`, `Char`, `Short`, `Byte` and **`String`**
 - **Big number types**: `BigInt`, `BigDecimal`
 
-## Supported Java types:
+## Supported Java types
 - **Java boxed primitives:** `java.lang.Integer`, `java.lang.Long`, `java.lang.Double`, etc.
 - **Java records**
 - **Java enums**
