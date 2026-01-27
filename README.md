@@ -179,7 +179,10 @@ println(xml)
 - **Java maps:** support for `java.util.Map` and subclasses
 
 ## Supported annotations
-Annotations can be placed on types, fields, values and enum cases.
+
+- All annotations are defined in `org.encalmo.writer.xml.annotation`.
+- Annotations can be placed on types, fields, values and enum cases, on case class fields or sealed trait members.
+- Custom tag and attribute names are only required when you want to override defaults.
 
 | Annotation            | Description                                                                                           |
 |-----------------------|-------------------------------------------------------------------------------------------------------|
@@ -192,11 +195,6 @@ Annotations can be placed on types, fields, values and enum cases.
 | `@xmlUseEnumCaseNames`      | Sets the case name of an enum as the XML element tag when serializing the enum value instead of field name or enum type name. 
 | `@xmlValue`           | Defines static value for an element, useful for enum cases     |
 | `@xmlValueSelector`   | Selects which member/field/property from a nested type is used as the value/text for this element.    |              |
-
-### Notes
-- All annotations are defined in `org.encalmo.writer.xml.annotation`.
-- Annotations can be used in any combination on case class fields or sealed trait members.
-- Custom tag and attribute names are only required when you want to override defaults.
 
 ## Key abstractions
 
