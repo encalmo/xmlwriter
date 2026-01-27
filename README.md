@@ -14,6 +14,7 @@ Macro-powered XML fast serialization library for Scala 3.
 - [Dependencies](#dependencies)
 - [Usage](#usage)
 - [Examples](#examples)
+- [Project content](#project-content)
 
 ## Oustanding features
 - **Highly performant low-level code avoiding typeclass instance allocations** 
@@ -286,3 +287,4 @@ Output:
 ├── XmlOutputBuilder.scala
 └── XmlWriter.scala
 ```
+
