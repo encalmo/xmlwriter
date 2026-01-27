@@ -113,7 +113,7 @@ object XmlOutputBuilder {
 
     private val indentationString = " " * indentation
     private var indentationLevel = 0
-    private var previous = '-'
+    private var previous = '-' // 's' for start, 'e' for end, 't' for text
 
     private inline def indent(): Unit =
       sb.append(indentationString * indentationLevel)
@@ -171,6 +171,10 @@ object XmlOutputBuilder {
     }
 
     final def appendText(text: String): Unit = {
+      if (previous == 'e') {
+        newline()
+        indent()
+      }
       sb.append(escapeTextForElement(text))
       previous = 't'
     }
@@ -295,6 +299,10 @@ object XmlOutputBuilder {
     }
 
     final def appendText(text: String): Unit = {
+      if (previous == 'e') {
+        newline()
+        indent()
+      }
       write(escapeTextForElement(text))
       previous = 't'
     }

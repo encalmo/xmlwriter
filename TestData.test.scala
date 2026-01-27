@@ -61,7 +61,8 @@ object TestData {
     bookAtDesk = (author = "A.A. Milne", title = "Winnie the Pooh"),
     hand1 = Left("Left hand"),
     hand2 = Right("Right hand"),
-    status = Status.PENDING
+    status = Status.PENDING,
+    active = true
   )
 
 }

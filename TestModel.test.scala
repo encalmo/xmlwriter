@@ -33,7 +33,8 @@ case class Person(
     bookAtDesk: (author: String, title: String),
     hand1: Either[String, String],
     hand2: Either[String, String],
-    status: Status
+    status: Status,
+    active: YesNo
 )
 
 enum Citizenship {
@@ -209,3 +210,25 @@ case class ExampleLargeCaseClass(
     field29: Option[Char],
     field30: String
 ) derives XmlWriter
+
+opaque type YesNo = Boolean
+
+object YesNo {
+
+  given Conversion[Boolean, YesNo] = {
+    case true  => true
+    case false => false
+  }
+
+  given XmlWriter[YesNo] = new XmlWriter[YesNo] {
+    def label: String = "YesNo"
+
+    def write(name: String, value: YesNo, createTag: Boolean)(using builder: XmlOutputBuilder): Unit =
+      if createTag then builder.appendElementStart(name)
+      builder.appendText(value match {
+        case true  => "yes"
+        case false => "no"
+      })
+      if createTag then builder.appendElementEnd(name)
+  }
+}
