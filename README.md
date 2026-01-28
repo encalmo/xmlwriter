@@ -146,15 +146,15 @@ val xml: String = {
 println(xml)
 ```
 
-## Oustanding features
-- **Genarates highly performant low-level code** 
-- Supports **field, value, case and type annotations** enabling fine-tuning of the resulting XML,
+## Outstanding features
+- **Generates highly performant low-level code** 
+- Supports **field, value, case, and type annotations** enabling fine-tuning of the resulting XML,
 - Supports **custom tag and attribute name transformation** (e.g., snake_case, kebab-case, upper/lower case, etc),
 - **Indented or compact XML output** with pluggable output builders (including streaming),
 - Automatic **escaping of text** (element and attribute content) to produce well-formed XML.
 - Extensible to custom types via **typeclass** instances,
 - Can automatically **derive** `XmlWriter` typeclass if requested,
-- Invokes `toString()` as a **fallback** strategy when type is not supported directly or does not have XmlWriter instance in scope.
+- Invokes `toString()` as a **fallback** strategy when type is not supported directly or does not have an XmlWriter instance in scope.
 - Decouples data structure traversal (`XmlWriter`) from output assembly (`XmlOutputBuilder`)
 
 ## Scala types supported directly without the need for typeclass derivation
@@ -185,22 +185,22 @@ println(xml)
 
 | Annotation            | Description                                                                                           |
 |-----------------------|-------------------------------------------------------------------------------------------------------|
-| `@xmlAttribute`       | Marks target to be serialized as an XML attribute of the enclosing element rather than as a child.   |
+| `@xmlAttribute`       | Marks the target to be serialized as an XML attribute of the enclosing element rather than as a child.   |
 | `@xmlContent`         | Marks target as the content (text value) of the XML element instead of a tag or attribute.           |
 | `@xmlTag`             | Sets a custom XML tag or attribute name for this target (overrides the target name in serialization).   |
 | `@xmlItemTag`         | Specifies the tag name to use for each element in a collection or array.                              |
 | `@xmlNoItemTags`      | Prevents wrapping each collection element in an extra XML tag; all items are added directly.          |
-| `@xmlNoTagInsideCollection` | Omits the tags of the target when inside collection or an array.                |
+| `@xmlNoTagInsideCollection` | Omits the tags of the target when inside a collection or an array.                |
 | `@xmlUseEnumCaseNames`      | Sets the case name of an enum as the XML element tag when serializing the enum value instead of field name or enum type name. 
-| `@xmlValue`           | Defines static value for an element, useful for enum cases     |
+| `@xmlValue`           | Defines a static value for an element, useful for enum cases     |
 | `@xmlValueSelector`   | Selects which member/field/property from a nested type is used as the value/text for this element.    |              |
 
 ## Key abstractions
 
-- object [`XmlWriter`](XmlWriter.scala) provides the main user-facing API, host of methods to serialize data types to XML,
+- object [`XmlWriter`](XmlWriter.scala) provides the main user-facing API, a host of methods to serialize data types to XML,
 - trait `XmlWriter[T]` defines typeclass interface,
 - trait [`XmlOutputBuilder`](XmlOutputBuilder.scala) defines low-level API for constructing XML output,
-- object `XmlOutputBuilder` provides set of default implementations of `XmlOutputBuilder` trait producing indented or compact format, building a `String` or writing directly to the `java.io.OutputStream`
+- object `XmlOutputBuilder` provides a set of default implementations of `XmlOutputBuilder` trait producing indented or compact format, building a `String` or writing directly to the `java.io.OutputStream`
 
 ## Dependencies
 
