@@ -186,8 +186,8 @@ object XmlWriterMacro {
           case TypeUtils.TypeReprIsPrimitiveOrStringOrBigDecimal() =>
             writeAsString(
               tpe = tpe,
-              tagName = tagName2,
               valueTerm = valueTerm,
+              tagName = tagName2,
               builder = builder,
               hasTag = !shouldTag,
               isCollectionItem = isCollectionItem,
@@ -198,8 +198,8 @@ object XmlWriterMacro {
           case tpe if tpe.dealias =:= TypeRepr.of[BigInt] || tpe.dealias =:= TypeRepr.of[java.math.BigInteger] =>
             writeAsString(
               tpe = tpe,
-              tagName = tagName2,
               valueTerm = valueTerm.methodCall("toString", List(Literal(IntConstant(10)))).toTerm,
+              tagName = tagName2,
               builder = builder,
               hasTag = !shouldTag,
               isCollectionItem = isCollectionItem,
@@ -210,9 +210,8 @@ object XmlWriterMacro {
           case TupleUtils.TypeReprIsTuple() =>
             writeTuple(
               tpe = tpe,
-              tagName = tagName2,
-              itemLabel = None,
               valueTerm = valueTerm,
+              tagName = tagName2,
               builder = builder,
               hasTag = hasTag,
               isCollectionItem = isCollectionItem,
@@ -225,8 +224,8 @@ object XmlWriterMacro {
           case OptionUtils.TypeReprIsOption(tpe) =>
             writeOption(
               tpe = tpe,
-              tagName = tagName2,
               valueTerm = valueTerm,
+              tagName = tagName2,
               builder = builder,
               hasTag = hasTag,
               isCollectionItem = isCollectionItem,
@@ -240,8 +239,8 @@ object XmlWriterMacro {
               tpe = tpe,
               leftTpe = leftTpe,
               rightTpe = rightTpe,
-              tagName = tagName2,
               valueTerm = valueTerm,
+              tagName = tagName2,
               builder = builder,
               hasTag = hasTag,
               isCollectionItem = isCollectionItem,
@@ -255,8 +254,8 @@ object XmlWriterMacro {
               tpe = tpe,
               keyTpe = keyTpe,
               valueTpe = valueTpe,
-              tagName = tagName2,
               valueTerm = valueTerm,
+              tagName = tagName2,
               builder = builder,
               hasTag = hasTag,
               isCollectionItem = isCollectionItem,
@@ -1165,7 +1164,6 @@ object XmlWriterMacro {
   )(
       tpe: cache.quotes.reflect.TypeRepr,
       tagName: TagName,
-      itemLabel: Option[String],
       valueTerm: cache.quotes.reflect.Term,
       builder: Builder,
       hasTag: Boolean,
@@ -1183,9 +1181,8 @@ object XmlWriterMacro {
     val isXmlContent = currentAnnotations.exists[annotation.xmlContent]
     val shouldTag = !hasTag && !isXmlContent
 
-    val itemTag: Option[String] = itemLabel.orElse(
-      currentAnnotations.getString[annotation.xmlItemTag](parameter = "name")
-    )
+    val itemTag: Option[String] = currentAnnotations
+      .getString[annotation.xmlItemTag](parameter = "name")
 
     TupleUtils.visit(
       label = itemTag,
