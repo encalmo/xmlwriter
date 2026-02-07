@@ -184,16 +184,28 @@ object XmlWriterMacro {
         tpe match {
 
           case TypeUtils.TypeReprIsPrimitiveOrStringOrBigDecimal() =>
-            debug(trace, debugIndent, tpe, tagName2, "writePrimitive")
-            if shouldTag then builder.appendElementStart(tagName2)
-            builder.appendText(valueTerm)
-            if shouldTag then builder.appendElementEnd(tagName2)
+            writeAsString(
+              tpe = tpe,
+              tagName = tagName2,
+              valueTerm = valueTerm,
+              builder = builder,
+              hasTag = !shouldTag,
+              isCollectionItem = isCollectionItem,
+              trace = trace,
+              debugIndent = debugIndent
+            )
 
           case tpe if tpe.dealias =:= TypeRepr.of[BigInt] || tpe.dealias =:= TypeRepr.of[java.math.BigInteger] =>
-            debug(trace, debugIndent, tpe, tagName2, "writeBigInt")
-            if shouldTag then builder.appendElementStart(tagName2)
-            builder.appendText(valueTerm.methodCall("toString", List(Literal(IntConstant(10)))).toTerm)
-            if shouldTag then builder.appendElementEnd(tagName2)
+            writeAsString(
+              tpe = tpe,
+              tagName = tagName2,
+              valueTerm = valueTerm.methodCall("toString", List(Literal(IntConstant(10)))).toTerm,
+              builder = builder,
+              hasTag = !shouldTag,
+              isCollectionItem = isCollectionItem,
+              trace = trace,
+              debugIndent = debugIndent
+            )
 
           case TupleUtils.TypeReprIsTuple() =>
             writeTuple(
@@ -403,10 +415,16 @@ object XmlWriterMacro {
 
           case _ =>
             // default to writing the string representation of the value
-            debug(trace, debugIndent, tpe, tagName, "writeAsString")
-            if shouldTag then builder.appendElementStart(tagName2)
-            builder.appendText(valueTerm.methodCall("toString", List()).toTerm)
-            if shouldTag then builder.appendElementEnd(tagName2)
+            writeAsString(
+              tpe = tpe,
+              tagName = tagName2,
+              valueTerm = valueTerm.methodCall("toString", List()).toTerm,
+              builder = builder,
+              hasTag = hasTag,
+              isCollectionItem = isCollectionItem,
+              trace = trace,
+              debugIndent = debugIndent
+            )
         }
     }
 
@@ -481,6 +499,25 @@ object XmlWriterMacro {
       }
     else tryStaticValueOrSelectorExpression
 
+  }
+
+  def writeAsString(using
+      cache: StatementsCache
+  )(
+      tpe: cache.quotes.reflect.TypeRepr,
+      tagName: TagName,
+      valueTerm: cache.quotes.reflect.Term,
+      builder: Builder,
+      hasTag: Boolean,
+      isCollectionItem: Boolean,
+      trace: scala.collection.mutable.Buffer[String],
+      debugIndent: Int
+  ): Unit = {
+    given cache.quotes.type = cache.quotes
+    debug(trace, debugIndent, tpe, tagName, "writePrimitive")
+    if !hasTag then builder.appendElementStart(tagName)
+    builder.appendText(valueTerm)
+    if !hasTag then builder.appendElementEnd(tagName)
   }
 
   def collectAttributesFromCaseClass(using
@@ -1328,11 +1365,16 @@ object XmlWriterMacro {
         )
 
       case None =>
-        // default to writing the string representation of the value
-        debug(trace, debugIndent, tpe, tagName, "writeAsString")
-        if !hasTag then builder.appendElementStart(tagName)
-        builder.appendText(valueTerm.methodCall("toString", List()).toTerm)
-        if !hasTag then builder.appendElementEnd(tagName)
+        writeAsString(
+          tpe = tpe,
+          tagName = tagName,
+          valueTerm = valueTerm.methodCall("toString", List()).toTerm,
+          builder = builder,
+          hasTag = hasTag,
+          isCollectionItem = isCollectionItem,
+          trace = trace,
+          debugIndent = debugIndent
+        )
     }
 
   }
