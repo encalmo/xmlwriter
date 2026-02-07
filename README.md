@@ -37,14 +37,14 @@ case class Employee(
 )
 
 val entity = Employee(
-    name = "John Doe",
-    age = 30,
-    email = Some("john.doe@example.com"),
-    addresses = List(
+  name = "John Doe",
+  age = 30,
+  email = Some("john.doe@example.com"),
+  addresses = List(
     Address(street = "123 Main St", city = "Anytown", postcode = "12345"),
     Address(street = "456 Back St", city = "Downtown", postcode = "78901")
-    ),
-    active = true
+  ),
+  active = true
 )
 
 val xml = XmlWriter.writeIndented(entity)
@@ -73,77 +73,60 @@ Output:
 </Employee>
 ```
 
-The example above produces the following inlined code:
+The example above produces the following code after macro expansion:
 ```scala
-val xml: String = {
+{
+  val builder: org.encalmo.writer.xml.XmlOutputBuilder = ...
+  builder.appendElementStart("Employee", immutable.Nil)
 
-    org.encalmo.writer.xml.XmlWriter.writeIndented[Employee]{
-      final lazy given val builder:
-        org.encalmo.writer.xml.XmlOutputBuilder.IndentedXmlStringBuilder =
-        org.encalmo.writer.xml.XmlOutputBuilder.indented(
-          indentation = 4,
-          initialString = if addXmlDeclaration then
-              "<?xml version=\'1.0\' encoding=\'UTF-8\'?>" else ""
-        )
-      
-        builder.appendElementStart("Employee", Nil)
-        
-        def writeCaseClassToXml_Employee(): Unit = {
+  def writeCaseClassToXml_Address(address: Address): scala.Unit = {
+    builder.appendElementStart("street")
+    builder.appendText(address.street)
+    builder.appendElementEnd("street")
+    builder.appendElementStart("city")
+    builder.appendText(address.city)
+    builder.appendElementEnd("city")
+    builder.appendElementStart("postcode")
+    builder.appendText(address.postcode)
+    builder.appendElementEnd("postcode")
+  }
 
-            builder.appendElementStart("name")
-            builder.appendText(entity.name.toString())
-            builder.appendElementEnd("name")
+  def writeCaseClassToXml_Employee(employee: Employee): scala.Unit = {
+    builder.appendElementStart("name")
+    builder.appendText(employee.name)
+    builder.appendElementEnd("name")
+    builder.appendElementStart("age")
+    builder.appendText(employee.age.toString())
+    builder.appendElementEnd("age")
 
-            builder.appendElementStart("age")
-            builder.appendText(entity.age.toString())
-            builder.appendElementEnd("age")
-              
-            entity.email match {
-                  case Some(value) =>
-                      builder.appendElementStart("email")
-                      builder.appendText(value.toString())
-                      builder.appendElementEnd("email")
-
-                  case None =>
-                    ()
-            }
-            
-            builder.appendElementStart("addresses")
-
-            entity.addresses.iterator.foreach( (value: Address) => {
-                    builder.appendElementStart("Address", Nil)
-                    
-                    def writeCaseClassToXml_Address(): Unit ={
-                        builder.appendElementStart("street")
-                        builder.appendText(value.street.toString()
-                        builder.appendElementEnd("street")
-
-                        builder.appendElementStart("city")
-                        builder.appendText(value.city.toString())
-                        builder.appendElementEnd("city")
-
-                        builder.appendElementStart("postcode")
-                        builder.appendText(value.postcode.toString())
-                        builder.appendElementEnd("postcode")
-                    }
-
-                    writeCaseClassToXml_Address()
-                    builder.appendElementEnd("Address")
-                }
-            )
-            builder.appendElementEnd("addresses")
-              
-            builder.appendElementStart("active")
-            builder.appendText(entity.active.toString())
-            builder.appendElementEnd("active")
-        }
-
-        writeCaseClassToXml_Employee()
-        builder.appendElementEnd("Employee")
+    employee.email match {
+      case string: scala.Some[scala.Predef.String] =>
+        builder.appendElementStart("email")
+        builder.appendText(string.value)
+        builder.appendElementEnd("email")
+      case scala.None =>
+        ()
     }
-    builder.result
+
+    builder.appendElementStart("addresses")
+    val addressesIterator: scala.collection.Iterator[Address] = (employee.addresses: scala.collection.Iterable[Address]).iterator
+    while (addressesIterator.hasNext) {
+      val addressItem: Address = addressesIterator.next()
+      builder.appendElementStart("Address", immutable.Nil)
+      writeCaseClassToXml_Address(addressItem)
+      builder.appendElementEnd("Address")
+      ()
+    }
+    builder.appendElementEnd("addresses")
+
+    builder.appendElementStart("active")
+    builder.appendText(employee.active.toString())
+    builder.appendElementEnd("active")
+  }
+  
+  writeCaseClassToXml_Employee(entity)
+  builder.appendElementEnd("Employee")
 }
-println(xml)
 ```
 
 ## Outstanding features
@@ -190,8 +173,6 @@ println(xml)
 | `@xmlTag`             | Sets a custom XML tag or attribute name for this target (overrides the target name in serialization).   |
 | `@xmlItemTag`         | Specifies the tag name to use for each element in a collection or array.                              |
 | `@xmlNoItemTags`      | Prevents wrapping each collection element in an extra XML tag; all items are added directly.          |
-| `@xmlNoTagInsideCollection` | Omits the tags of the target when inside a collection or an array.                |
-| `@xmlUseEnumCaseNames`      | Sets the case name of an enum as the XML element tag when serializing the enum value instead of field name or enum type name. 
 | `@xmlValue`           | Defines a static value for an element, useful for enum cases     |
 | `@xmlValueSelector`   | Selects which member/field/property from a nested type is used as the value/text for this element.    |              |
 

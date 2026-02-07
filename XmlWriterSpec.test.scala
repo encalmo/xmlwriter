@@ -5,7 +5,7 @@ import java.time.LocalDate
 import java.io.ByteArrayOutputStream
 import java.nio.charset.StandardCharsets
 
-class MacroXmlWriterSpec extends munit.FunSuite {
+class XmlWriterSpec extends munit.FunSuite {
 
   test("write simple case class") {
 
@@ -59,6 +59,89 @@ class MacroXmlWriterSpec extends munit.FunSuite {
     )
   }
 
+  test("write a type alias") {
+    type Name = String
+    val entity: Name = "John Doe"
+    val xml = XmlWriter.writeIndented(entity, addXmlDeclaration = false)
+    println(xml)
+    assertEquals(
+      xml,
+      """|<Name>John Doe</Name>""".stripMargin
+    )
+  }
+
+  test("write a list of type aliases") {
+    type name = String
+    val entity: List[name] = List("John Doe", "Jane Doe")
+    val xml = XmlWriter.writeIndentedUsingRootTagName("names", entity, addXmlDeclaration = false)
+    println(xml)
+    assertEquals(
+      xml,
+      """|<names>
+         |    <name>John Doe</name>
+         |    <name>Jane Doe</name>
+         |</names>""".stripMargin
+    )
+  }
+
+  test("write an opaque type with an upper bound") {
+    val entity = DriverLicense("1234567890", LocalDate.of(2026, 1, 1))
+    val xml = XmlWriter.writeIndented(entity, addXmlDeclaration = false)
+    println(xml)
+    assertEquals(
+      xml,
+      """|<DriverLicense expiryDate="2026-01-01">1234567890</DriverLicense>""".stripMargin
+    )
+  }
+
+  test("write an opaque type without an upper bound") {
+    val entity = PassportNumber("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
+    val xml = XmlWriter.writeIndented(entity, addXmlDeclaration = false)
+    println(xml)
+    assertEquals(
+      xml,
+      """|<PassportNumber>ABCDEFGHIJKLMNOPQRSTUVWXYZ</PassportNumber>""".stripMargin
+    )
+  }
+
+  test("write a simple case class without selector annotation") {
+    case class Ball(diameter: Double)
+    val entity = Ball(1.2)
+    val xml = XmlWriter.writeIndentedUsingRootTagName("ball", entity, addXmlDeclaration = false)
+    println(xml)
+    assertEquals(
+      xml,
+      """|<ball>
+         |    <diameter>1.2</diameter>
+         |</ball>""".stripMargin
+    )
+  }
+
+  test("write a simple case class with a value selector annotation") {
+    @xmlValueSelector("diameter") case class Ball(diameter: Double)
+    val entity = Ball(1.2)
+    val xml = XmlWriter.writeIndentedUsingRootTagName("ball", entity, addXmlDeclaration = false)
+    println(xml)
+    assertEquals(
+      xml,
+      """|<ball>1.2</ball>""".stripMargin
+    )
+  }
+
+  test("write a list of values of case class with a value selector annotation") {
+    @xmlValueSelector("diameter") case class Ball(diameter: Double)
+    val entity = List(Ball(1.2), Ball(3.4))
+    val xml = XmlWriter.writeIndentedUsingRootTagName("balls", entity, addXmlDeclaration = false)
+    println(xml)
+    assertEquals(
+      xml,
+      """|<balls>
+         |    <Ball>1.2</Ball>
+         |    <Ball>3.4</Ball>
+         |</balls>""".stripMargin
+    )
+  }
+
   test("write Enum") {
     val entity = Citizenship.UK
     val xml = XmlWriter.writeIndentedUsingRootTagName("citizenship", entity, addXmlDeclaration = false)
@@ -66,6 +149,163 @@ class MacroXmlWriterSpec extends munit.FunSuite {
     assertEquals(
       xml,
       """|<citizenship>United Kingdom</citizenship>""".stripMargin
+    )
+  }
+
+  test("write tuple of Enum with case values and case class values") {
+    val entity =
+      (
+        MaritalStatus.Single,
+        MaritalStatus.Married(partnerName = "Jane Doe", from = LocalDate.of(2025, 1, 1)),
+        MaritalStatus.CivilPartnership(partnerName = "John Doe", from = LocalDate.of(2024, 1, 1)),
+        MaritalStatus.Divorced(from = LocalDate.of(2023, 1, 1)),
+        MaritalStatus.Widowed(from = LocalDate.of(2022, 1, 1))
+      )
+
+    val xml = XmlWriter.writeIndentedUsingRootTagName("maritalStatus", entity, addXmlDeclaration = false)
+    println(xml)
+    assertEquals(
+      xml,
+      """|<maritalStatus>
+         |    <MaritalStatus>Single</MaritalStatus>
+         |    <MaritalStatus>
+         |        <Married>
+         |            <partnerName>Jane Doe</partnerName>
+         |            <from>2025-01-01</from>
+         |        </Married>
+         |    </MaritalStatus>
+         |    <MaritalStatus>
+         |        <CivilPartnership>
+         |            <partnerName>John Doe</partnerName>
+         |            <from>2024-01-01</from>
+         |        </CivilPartnership>
+         |    </MaritalStatus>
+         |    <MaritalStatus>
+         |        <Divorced>
+         |            <from>2023-01-01</from>
+         |        </Divorced>
+         |    </MaritalStatus>
+         |    <MaritalStatus>
+         |        <Widowed>
+         |            <from>2022-01-01</from>
+         |        </Widowed>
+         |    </MaritalStatus>
+         |</maritalStatus>""".stripMargin
+    )
+  }
+
+  test("write list of Enum with case values and case class values") {
+    @xmlNoItemTags val entity =
+      List(
+        MaritalStatus.Single,
+        MaritalStatus.Married(partnerName = "Jane Doe", from = LocalDate.of(2025, 1, 1)),
+        MaritalStatus.CivilPartnership(partnerName = "John Doe", from = LocalDate.of(2024, 1, 1)),
+        MaritalStatus.Divorced(from = LocalDate.of(2023, 1, 1)),
+        MaritalStatus.Widowed(from = LocalDate.of(2022, 1, 1))
+      )
+
+    val xml = XmlWriter.writeIndentedUsingRootTagName("maritalStatus", entity, addXmlDeclaration = false)
+    println(xml)
+    assertEquals(
+      xml,
+      """|<maritalStatus>
+         |    <Single></Single>
+         |    <Married>
+         |        <partnerName>Jane Doe</partnerName>
+         |        <from>2025-01-01</from>
+         |    </Married>
+         |    <CivilPartnership>
+         |        <partnerName>John Doe</partnerName>
+         |        <from>2024-01-01</from>
+         |    </CivilPartnership>
+         |    <Divorced>
+         |        <from>2023-01-01</from>
+         |    </Divorced>
+         |    <Widowed>
+         |        <from>2022-01-01</from>
+         |    </Widowed>
+         |</maritalStatus>""".stripMargin
+    )
+  }
+
+  test("write Enum with custom case value selector") {
+    val entity = List(
+      Hobby.Swimming,
+      Hobby.Cooking,
+      Hobby.Other(name = "Binge watching TV series")
+    )
+    val xml = XmlWriter.writeIndentedUsingRootTagName("hobbies", entity, addXmlDeclaration = false)
+    println(xml)
+    assertEquals(
+      xml,
+      """|<hobbies>
+         |    <Hobby>Swimming</Hobby>
+         |    <Hobby>Cooking</Hobby>
+         |    <Hobby>Binge watching TV series</Hobby>
+         |</hobbies>""".stripMargin
+    )
+  }
+
+  test("write Java enum") {
+    val entity = (Status.PENDING, Status.ACTIVE, Status.FAILED)
+    val xml = XmlWriter.writeIndented(entity, addXmlDeclaration = false)
+    println(xml)
+    assertEquals(
+      xml,
+      """|<Tuple3>
+         |    <Status>PENDING</Status>
+         |    <Status>ACTIVE</Status>
+         |    <Status>FAILED</Status>
+         |</Tuple3>""".stripMargin
+    )
+  }
+
+  test("write Java enum tuple with custom tag name") {
+    @xmlTag("Statuses") val entity = (Status.PENDING, Status.ACTIVE, Status.FAILED)
+    val xml = XmlWriter.writeIndented(entity, addXmlDeclaration = false)
+    println(xml)
+    assertEquals(
+      xml,
+      """|<Statuses>
+         |    <Status>PENDING</Status>
+         |    <Status>ACTIVE</Status>
+         |    <Status>FAILED</Status>
+         |</Statuses>""".stripMargin
+    )
+  }
+
+  test("write Enum within a case class") {
+    case class Foo(status: Status)
+    val entity = Foo(status = Status.PENDING)
+    val xml = XmlWriter.writeIndented(entity, addXmlDeclaration = false)
+    println(xml)
+    assertEquals(
+      xml,
+      """|<Foo>
+         |    <status>PENDING</status>
+         |</Foo>""".stripMargin
+    )
+  }
+
+  test("write case class Enum within a case class") {
+    case class Foo(status: MaritalStatus, hobby: Hobby)
+    val entity = Foo(
+      status = MaritalStatus.Married(partnerName = "Jane Doe", from = LocalDate.of(2025, 1, 1)),
+      hobby = Hobby.Other(name = "Binge watching TV series")
+    )
+    val xml = XmlWriter.writeIndented(entity, addXmlDeclaration = false)
+    println(xml)
+    assertEquals(
+      xml,
+      """|<Foo>
+         |    <status>
+         |        <Married>
+         |            <partnerName>Jane Doe</partnerName>
+         |            <from>2025-01-01</from>
+         |        </Married>
+         |    </status>
+         |    <hobby>Binge watching TV series</hobby>
+         |</Foo>""".stripMargin
     )
   }
 
@@ -82,6 +322,172 @@ class MacroXmlWriterSpec extends munit.FunSuite {
     )
   }
 
+  test("write Either") {
+    val entity: (Either[String, Double], Either[String, Double]) = (Left("fail"), Right(1.2))
+    val xml = XmlWriter.writeIndentedUsingRootTagName("foo", entity, addXmlDeclaration = false)
+    println(xml)
+    assertEquals(
+      xml,
+      """|<foo>
+         |    <String>fail</String>
+         |    <Double>1.2</Double>
+         |</foo>""".stripMargin
+    )
+  }
+
+  test("write List") {
+    val entity = List(1, 2, 3)
+    val xml = XmlWriter.writeIndentedUsingRootTagName("foo", entity, addXmlDeclaration = false)
+    println(xml)
+    assertEquals(
+      xml,
+      """|<foo>
+         |    <Int>1</Int>
+         |    <Int>2</Int>
+         |    <Int>3</Int>
+         |</foo>""".stripMargin
+    )
+  }
+
+  test("write List with item tag") {
+    @xmlItemTag("pos") val entity = List(1, 2, 3)
+    val xml = XmlWriter.writeIndentedUsingRootTagName("foo", entity, addXmlDeclaration = false)
+    println(xml)
+    assertEquals(
+      xml,
+      """|<foo>
+         |    <pos>1</pos>
+         |    <pos>2</pos>
+         |    <pos>3</pos>
+         |</foo>""".stripMargin
+    )
+  }
+
+  test("write List with item tag and skip item tags") {
+    @xmlNoItemTags val entity = List(1, 2, 3)
+    val xml = XmlWriter.writeIndentedUsingRootTagName("foo", entity, addXmlDeclaration = false)
+    println(xml)
+    assertEquals(
+      xml,
+      """|<foo>123</foo>""".stripMargin
+    )
+  }
+
+  test("write Array") {
+    val entity = Array(1, 2, 3)
+    val xml = XmlWriter.writeIndentedUsingRootTagName("foo", entity, addXmlDeclaration = false)
+    println(xml)
+    assertEquals(
+      xml,
+      """|<foo>
+         |    <Int>1</Int>
+         |    <Int>2</Int>
+         |    <Int>3</Int>
+         |</foo>""".stripMargin
+    )
+  }
+
+  test("write Array of Arrays") {
+    val entity = Array(Array(1, 2, 3), Array(4, 5, 6))
+    val xml = XmlWriter.writeIndentedUsingRootTagName("foo", entity, addXmlDeclaration = false)
+    println(xml)
+    assertEquals(
+      xml,
+      """|<foo>
+         |    <Array>
+         |        <Int>1</Int>
+         |        <Int>2</Int>
+         |        <Int>3</Int>
+         |    </Array>
+         |    <Array>
+         |        <Int>4</Int>
+         |        <Int>5</Int>
+         |        <Int>6</Int>
+         |    </Array>
+         |</foo>""".stripMargin
+    )
+  }
+
+  test("write Array of Arrays using item tag") {
+    @xmlItemTag("bar") val entity = Array(Array(1, 2, 3), Array(4, 5, 6))
+    val xml = XmlWriter.writeIndentedUsingRootTagName("foo", entity, addXmlDeclaration = false)
+    println(xml)
+    assertEquals(
+      xml,
+      """|<foo>
+         |    <bar>
+         |        <Int>1</Int>
+         |        <Int>2</Int>
+         |        <Int>3</Int>
+         |    </bar>
+         |    <bar>
+         |        <Int>4</Int>
+         |        <Int>5</Int>
+         |        <Int>6</Int>
+         |    </bar>
+         |</foo>""".stripMargin
+    )
+  }
+
+  test("write Array of Arrays of Arrays") {
+    val entity = Array(Array(Array(1, 2, 3), Array(4, 5, 6)), Array(Array(10, 11, 12)))
+    val xml = XmlWriter.writeIndentedUsingRootTagName("foo", entity, addXmlDeclaration = false)
+    println(xml)
+    assertEquals(
+      xml,
+      """|<foo>
+         |    <Array>
+         |        <Array>
+         |            <Int>1</Int>
+         |            <Int>2</Int>
+         |            <Int>3</Int>
+         |        </Array>
+         |        <Array>
+         |            <Int>4</Int>
+         |            <Int>5</Int>
+         |            <Int>6</Int>
+         |        </Array>
+         |    </Array>
+         |    <Array>
+         |        <Array>
+         |            <Int>10</Int>
+         |            <Int>11</Int>
+         |            <Int>12</Int>
+         |        </Array>
+         |    </Array>
+         |</foo>""".stripMargin
+    )
+  }
+
+  test("write Map") {
+    val entity = Map("x" -> 1, "y" -> 2)
+    val xml = XmlWriter.writeIndentedUsingRootTagName("foo", entity, addXmlDeclaration = false)
+    println(xml)
+    assertEquals(
+      xml,
+      """|<foo>
+         |    <x>1</x>
+         |    <y>2</y>
+         |</foo>""".stripMargin
+    )
+  }
+
+  test("write Map inside the case class") {
+    case class Foo(mappings: Map[String, Int])
+    val entity = Foo(Map("x" -> 1, "y" -> 2))
+    val xml = XmlWriter.writeIndented(entity, addXmlDeclaration = false)
+    println(xml)
+    assertEquals(
+      xml,
+      """|<Foo>
+         |    <mappings>
+         |        <x>1</x>
+         |        <y>2</y>
+         |    </mappings>
+         |</Foo>""".stripMargin
+    )
+  }
+
   test("write Tuple 2 elements") {
     val entity = (1, Option(Vector(1.2, 3.4)))
     val xml = XmlWriter.writeIndentedUsingRootTagName("foo", entity, addXmlDeclaration = false)
@@ -94,6 +500,32 @@ class MacroXmlWriterSpec extends munit.FunSuite {
          |        <Double>1.2</Double>
          |        <Double>3.4</Double>
          |    </Vector>
+         |</foo>""".stripMargin
+    )
+  }
+
+  test("write Union") {
+    type Union = String | Int | Boolean
+    val entity: Union = "a"
+    val xml = XmlWriter.writeIndentedUsingRootTagName("foo", entity, addXmlDeclaration = false)
+    println(xml)
+    assertEquals(
+      xml,
+      """|<foo>a</foo>""".stripMargin
+    )
+  }
+
+  test("write List of Union") {
+    type Union = String | Int | Boolean
+    val entity: List[Union] = List("a", 1, true)
+    val xml = XmlWriter.writeIndentedUsingRootTagName("foo", entity, addXmlDeclaration = false)
+    println(xml)
+    assertEquals(
+      xml,
+      """|<foo>
+         |    <Union>a</Union>
+         |    <Union>1</Union>
+         |    <Union>true</Union>
          |</foo>""".stripMargin
     )
   }
@@ -163,7 +595,9 @@ class MacroXmlWriterSpec extends munit.FunSuite {
          |        <Int>7</Int>
          |        <Int>8</Int>
          |    </Set>
-         |    <x>1</x>
+         |    <Map>
+         |        <x>1</x>
+         |    </Map>
          |    <Array>
          |        <Int>2</Int>
          |        <Int>4</Int>
@@ -179,8 +613,10 @@ class MacroXmlWriterSpec extends munit.FunSuite {
          |        <Char>b</Char>
          |        <Char>c</Char>
          |    </List>
-         |    <1>one</1>
-         |    <2>two</2>
+         |    <Map>
+         |        <1>one</1>
+         |        <2>two</2>
+         |    </Map>
          |    <Vector>
          |        <Double>1.2</Double>
          |        <Double>3.4</Double>
@@ -200,6 +636,35 @@ class MacroXmlWriterSpec extends munit.FunSuite {
          |    <age>30</age>
          |    <email>john.doe@example.com</email>
          |</FactsRow>""".stripMargin
+    )
+  }
+
+  test("write Java map") {
+    val entity = new java.util.LinkedHashMap[String, Integer]()
+    entity.put("UPS", 1)
+    entity.put("FedEx", 2)
+    val xml = XmlWriter.writeIndentedUsingRootTagName("suppliers", entity, addXmlDeclaration = false)
+    println(xml)
+    assertEquals(
+      xml,
+      """|<suppliers>
+         |    <UPS>1</UPS>
+         |    <FedEx>2</FedEx>
+         |</suppliers>""".stripMargin
+    )
+  }
+
+  test("write Java iterable") {
+    @xmlItemTag("item") val entity = java.util.List.of(1, 2, 3)
+    val xml = XmlWriter.writeIndentedUsingRootTagName("items", entity, addXmlDeclaration = false)
+    println(xml)
+    assertEquals(
+      xml,
+      """|<items>
+         |    <item>1</item>
+         |    <item>2</item>
+         |    <item>3</item>
+         |</items>""".stripMargin
     )
   }
 
@@ -242,20 +707,6 @@ class MacroXmlWriterSpec extends munit.FunSuite {
     )
   }
 
-  test("write Java enum") {
-    val entity = (Status.PENDING, Status.ACTIVE, Status.FAILED)
-    val xml = XmlWriter.writeIndented(entity, addXmlDeclaration = false)
-    println(xml)
-    assertEquals(
-      xml,
-      """|<Tuple3>
-         |    <Status>PENDING</Status>
-         |    <Status>ACTIVE</Status>
-         |    <Status>FAILED</Status>
-         |</Tuple3>""".stripMargin
-    )
-  }
-
   test("write single Address") {
     val entity = Address(street = "123 <Main> St", city = "&Anytown", postcode = "12345")
     val xml = XmlWriter.writeIndented(entity, addXmlDeclaration = false)
@@ -287,9 +738,11 @@ class MacroXmlWriterSpec extends munit.FunSuite {
     println(xml)
     assertEquals(
       xml,
-      """|<Airbus>
-         |    <model>A380</model>
-         |</Airbus>""".stripMargin
+      """|<Planes>
+         |    <Airbus>
+         |        <model>A380</model>
+         |    </Airbus>
+         |</Planes>""".stripMargin
     )
   }
 
@@ -421,16 +874,18 @@ class MacroXmlWriterSpec extends munit.FunSuite {
          |        <city>&amp;Anytown</city>
          |        <zipcode>12345</zipcode>
          |    </address>
-         |    <home>
-         |        <street>123 &lt;Main&gt; St</street>
-         |        <city>&amp;Anytown</city>
-         |        <zipcode>12345</zipcode>
-         |    </home>
-         |    <work>
-         |        <street>456 &lt;Main&gt; St</street>
-         |        <city>&amp;Anytown</city>
-         |        <zipcode>12345</zipcode>
-         |    </work>
+         |    <addresses>
+         |        <home>
+         |            <street>123 &lt;Main&gt; St</street>
+         |            <city>&amp;Anytown</city>
+         |            <zipcode>12345</zipcode>
+         |        </home>
+         |        <work>
+         |            <street>456 &lt;Main&gt; St</street>
+         |            <city>&amp;Anytown</city>
+         |            <zipcode>12345</zipcode>
+         |        </work>
+         |    </addresses>
          |    <isStudent>false</isStudent>
          |    <tags>
          |        <tag name="tag1&quot;">value1</tag>
@@ -515,7 +970,7 @@ class MacroXmlWriterSpec extends munit.FunSuite {
 
     assertEquals(
       xml,
-      """<Person ID="1234567890"><name>John Doe</name><age>30</age><stature>188.8</stature><email>john.doe@example.com</email><address><street>123 &lt;Main&gt; St</street><city>&amp;Anytown</city><zipcode>12345</zipcode></address><home><street>123 &lt;Main&gt; St</street><city>&amp;Anytown</city><zipcode>12345</zipcode></home><work><street>456 &lt;Main&gt; St</street><city>&amp;Anytown</city><zipcode>12345</zipcode></work><isStudent>false</isStudent><tags><tag name="tag1&quot;">value1</tag><tag name="&lt;tag2&gt;">value2</tag></tags><citizenship>United Kingdom</citizenship><current-immigration-status>permanent resident</current-immigration-status><immigration-status-valid-until>2026-01-01</immigration-status-valid-until><marital><Single></Single><Married><partnerName>Jane Doe</partnerName><from>2025-01-01</from></Married></marital><hobbies><Hobby>Swimming</Hobby><Hobby>Cooking</Hobby><Hobby>Binge watching TV series</Hobby></hobbies><hobby>Playing guitar</hobby><passportNumber>1234567890</passportNumber><driverLicense expiryDate="2026-12-31">abcdefghijklm</driverLicense><disabilities><Disability>Blindness</Disability><Disability>Deafness</Disability></disabilities><disability>Blindness</disability><benefits1><Benefit>ChildBenefit</Benefit><Benefit>UniversalCredit</Benefit></benefits1><benefits2>false</benefits2><skills><skill>Java</skill><skill>Scala</skill><skill>Python</skill></skills><wallet><item>123</item><item>John Doe</item><item>2025-01-01</item></wallet><assets><Cars>Ford</Cars><Boats><boat>Brave Wave</boat><boat>Sharky</boat></Boats><Planes><Airbus><model>A380</model></Airbus></Planes></assets><books><book><author>Francis Scott Fitzgerald</author><title>The Great Gatsby</title></book><book><author>Harper Lee</author><title>To Kill a Mockingbird</title></book></books><bookAtDesk><author>A.A. Milne</author><title>Winnie the Pooh</title></bookAtDesk><hand1>Left hand</hand1><hand2>Right hand</hand2><status>PENDING</status><active>yes</active></Person>""".stripMargin
+      """<Person ID="1234567890"><name>John Doe</name><age>30</age><stature>188.8</stature><email>john.doe@example.com</email><address><street>123 &lt;Main&gt; St</street><city>&amp;Anytown</city><zipcode>12345</zipcode></address><addresses><home><street>123 &lt;Main&gt; St</street><city>&amp;Anytown</city><zipcode>12345</zipcode></home><work><street>456 &lt;Main&gt; St</street><city>&amp;Anytown</city><zipcode>12345</zipcode></work></addresses><isStudent>false</isStudent><tags><tag name="tag1&quot;">value1</tag><tag name="&lt;tag2&gt;">value2</tag></tags><citizenship>United Kingdom</citizenship><current-immigration-status>permanent resident</current-immigration-status><immigration-status-valid-until>2026-01-01</immigration-status-valid-until><marital><Single></Single><Married><partnerName>Jane Doe</partnerName><from>2025-01-01</from></Married></marital><hobbies><Hobby>Swimming</Hobby><Hobby>Cooking</Hobby><Hobby>Binge watching TV series</Hobby></hobbies><hobby>Playing guitar</hobby><passportNumber>1234567890</passportNumber><driverLicense expiryDate="2026-12-31">abcdefghijklm</driverLicense><disabilities><Disability>Blindness</Disability><Disability>Deafness</Disability></disabilities><disability>Blindness</disability><benefits1><Benefit>ChildBenefit</Benefit><Benefit>UniversalCredit</Benefit></benefits1><benefits2>false</benefits2><skills><skill>Java</skill><skill>Scala</skill><skill>Python</skill></skills><wallet><item>123</item><item>John Doe</item><item>2025-01-01</item></wallet><assets><Cars>Ford</Cars><Boats><boat>Brave Wave</boat><boat>Sharky</boat></Boats><Planes><Airbus><model>A380</model></Airbus></Planes></assets><books><book><author>Francis Scott Fitzgerald</author><title>The Great Gatsby</title></book><book><author>Harper Lee</author><title>To Kill a Mockingbird</title></book></books><bookAtDesk><author>A.A. Milne</author><title>Winnie the Pooh</title></bookAtDesk><hand1>Left hand</hand1><hand2>Right hand</hand2><status>PENDING</status><active>yes</active></Person>""".stripMargin
     )
   }
 
@@ -537,16 +992,18 @@ class MacroXmlWriterSpec extends munit.FunSuite {
          |        <city>&amp;Anytown</city>
          |        <zipcode>12345</zipcode>
          |    </address>
-         |    <home>
-         |        <street>123 &lt;Main&gt; St</street>
-         |        <city>&amp;Anytown</city>
-         |        <zipcode>12345</zipcode>
-         |    </home>
-         |    <work>
-         |        <street>456 &lt;Main&gt; St</street>
-         |        <city>&amp;Anytown</city>
-         |        <zipcode>12345</zipcode>
-         |    </work>
+         |    <addresses>
+         |        <home>
+         |            <street>123 &lt;Main&gt; St</street>
+         |            <city>&amp;Anytown</city>
+         |            <zipcode>12345</zipcode>
+         |        </home>
+         |        <work>
+         |            <street>456 &lt;Main&gt; St</street>
+         |            <city>&amp;Anytown</city>
+         |            <zipcode>12345</zipcode>
+         |        </work>
+         |    </addresses>
          |    <isStudent>false</isStudent>
          |    <tags>
          |        <tag name="tag1&quot;">value1</tag>
@@ -634,7 +1091,7 @@ class MacroXmlWriterSpec extends munit.FunSuite {
 
     assertEquals(
       xml,
-      """<Person ID="1234567890"><name>John Doe</name><age>30</age><stature>188.8</stature><email>john.doe@example.com</email><address><street>123 &lt;Main&gt; St</street><city>&amp;Anytown</city><zipcode>12345</zipcode></address><home><street>123 &lt;Main&gt; St</street><city>&amp;Anytown</city><zipcode>12345</zipcode></home><work><street>456 &lt;Main&gt; St</street><city>&amp;Anytown</city><zipcode>12345</zipcode></work><isStudent>false</isStudent><tags><tag name="tag1&quot;">value1</tag><tag name="&lt;tag2&gt;">value2</tag></tags><citizenship>United Kingdom</citizenship><current-immigration-status>permanent resident</current-immigration-status><immigration-status-valid-until>2026-01-01</immigration-status-valid-until><marital><Single></Single><Married><partnerName>Jane Doe</partnerName><from>2025-01-01</from></Married></marital><hobbies><Hobby>Swimming</Hobby><Hobby>Cooking</Hobby><Hobby>Binge watching TV series</Hobby></hobbies><hobby>Playing guitar</hobby><passportNumber>1234567890</passportNumber><driverLicense expiryDate="2026-12-31">abcdefghijklm</driverLicense><disabilities><Disability>Blindness</Disability><Disability>Deafness</Disability></disabilities><disability>Blindness</disability><benefits1><Benefit>ChildBenefit</Benefit><Benefit>UniversalCredit</Benefit></benefits1><benefits2>false</benefits2><skills><skill>Java</skill><skill>Scala</skill><skill>Python</skill></skills><wallet><item>123</item><item>John Doe</item><item>2025-01-01</item></wallet><assets><Cars>Ford</Cars><Boats><boat>Brave Wave</boat><boat>Sharky</boat></Boats><Planes><Airbus><model>A380</model></Airbus></Planes></assets><books><book><author>Francis Scott Fitzgerald</author><title>The Great Gatsby</title></book><book><author>Harper Lee</author><title>To Kill a Mockingbird</title></book></books><bookAtDesk><author>A.A. Milne</author><title>Winnie the Pooh</title></bookAtDesk><hand1>Left hand</hand1><hand2>Right hand</hand2><status>PENDING</status><active>yes</active></Person>""".stripMargin
+      """<Person ID="1234567890"><name>John Doe</name><age>30</age><stature>188.8</stature><email>john.doe@example.com</email><address><street>123 &lt;Main&gt; St</street><city>&amp;Anytown</city><zipcode>12345</zipcode></address><addresses><home><street>123 &lt;Main&gt; St</street><city>&amp;Anytown</city><zipcode>12345</zipcode></home><work><street>456 &lt;Main&gt; St</street><city>&amp;Anytown</city><zipcode>12345</zipcode></work></addresses><isStudent>false</isStudent><tags><tag name="tag1&quot;">value1</tag><tag name="&lt;tag2&gt;">value2</tag></tags><citizenship>United Kingdom</citizenship><current-immigration-status>permanent resident</current-immigration-status><immigration-status-valid-until>2026-01-01</immigration-status-valid-until><marital><Single></Single><Married><partnerName>Jane Doe</partnerName><from>2025-01-01</from></Married></marital><hobbies><Hobby>Swimming</Hobby><Hobby>Cooking</Hobby><Hobby>Binge watching TV series</Hobby></hobbies><hobby>Playing guitar</hobby><passportNumber>1234567890</passportNumber><driverLicense expiryDate="2026-12-31">abcdefghijklm</driverLicense><disabilities><Disability>Blindness</Disability><Disability>Deafness</Disability></disabilities><disability>Blindness</disability><benefits1><Benefit>ChildBenefit</Benefit><Benefit>UniversalCredit</Benefit></benefits1><benefits2>false</benefits2><skills><skill>Java</skill><skill>Scala</skill><skill>Python</skill></skills><wallet><item>123</item><item>John Doe</item><item>2025-01-01</item></wallet><assets><Cars>Ford</Cars><Boats><boat>Brave Wave</boat><boat>Sharky</boat></Boats><Planes><Airbus><model>A380</model></Airbus></Planes></assets><books><book><author>Francis Scott Fitzgerald</author><title>The Great Gatsby</title></book><book><author>Harper Lee</author><title>To Kill a Mockingbird</title></book></books><bookAtDesk><author>A.A. Milne</author><title>Winnie the Pooh</title></bookAtDesk><hand1>Left hand</hand1><hand2>Right hand</hand2><status>PENDING</status><active>yes</active></Person>""".stripMargin
     )
   }
 
@@ -659,16 +1116,18 @@ class MacroXmlWriterSpec extends munit.FunSuite {
          |        <city>&amp;Anytown</city>
          |        <zipcode>12345</zipcode>
          |    </address>
-         |    <home>
-         |        <street>123 &lt;Main&gt; St</street>
-         |        <city>&amp;Anytown</city>
-         |        <zipcode>12345</zipcode>
-         |    </home>
-         |    <work>
-         |        <street>456 &lt;Main&gt; St</street>
-         |        <city>&amp;Anytown</city>
-         |        <zipcode>12345</zipcode>
-         |    </work>
+         |    <addresses>
+         |        <home>
+         |            <street>123 &lt;Main&gt; St</street>
+         |            <city>&amp;Anytown</city>
+         |            <zipcode>12345</zipcode>
+         |        </home>
+         |        <work>
+         |            <street>456 &lt;Main&gt; St</street>
+         |            <city>&amp;Anytown</city>
+         |            <zipcode>12345</zipcode>
+         |        </work>
+         |    </addresses>
          |    <isstudent>false</isstudent>
          |    <tags>
          |        <tag name="tag1&quot;">value1</tag>
@@ -758,7 +1217,7 @@ class MacroXmlWriterSpec extends munit.FunSuite {
 
     assertEquals(
       xml,
-      """<PERSON id="1234567890"><NAME>John Doe</NAME><AGE>30</AGE><STATURE>188.8</STATURE><EMAIL>john.doe@example.com</EMAIL><ADDRESS><STREET>123 &lt;Main&gt; St</STREET><CITY>&amp;Anytown</CITY><ZIPCODE>12345</ZIPCODE></ADDRESS><HOME><STREET>123 &lt;Main&gt; St</STREET><CITY>&amp;Anytown</CITY><ZIPCODE>12345</ZIPCODE></HOME><WORK><STREET>456 &lt;Main&gt; St</STREET><CITY>&amp;Anytown</CITY><ZIPCODE>12345</ZIPCODE></WORK><ISSTUDENT>false</ISSTUDENT><TAGS><TAG name="tag1&quot;">value1</TAG><TAG name="&lt;tag2&gt;">value2</TAG></TAGS><CITIZENSHIP>United Kingdom</CITIZENSHIP><CURRENT-IMMIGRATION-STATUS>permanent resident</CURRENT-IMMIGRATION-STATUS><IMMIGRATION-STATUS-VALID-UNTIL>2026-01-01</IMMIGRATION-STATUS-VALID-UNTIL><MARITAL><SINGLE></SINGLE><MARRIED><PARTNERNAME>Jane Doe</PARTNERNAME><FROM>2025-01-01</FROM></MARRIED></MARITAL><HOBBIES><HOBBY>Swimming</HOBBY><HOBBY>Cooking</HOBBY><HOBBY>Binge watching TV series</HOBBY></HOBBIES><HOBBY>Playing guitar</HOBBY><PASSPORTNUMBER>1234567890</PASSPORTNUMBER><DRIVERLICENSE expirydate="2026-12-31">abcdefghijklm</DRIVERLICENSE><DISABILITIES><DISABILITY>Blindness</DISABILITY><DISABILITY>Deafness</DISABILITY></DISABILITIES><DISABILITY>Blindness</DISABILITY><BENEFITS1><BENEFIT>ChildBenefit</BENEFIT><BENEFIT>UniversalCredit</BENEFIT></BENEFITS1><BENEFITS2>false</BENEFITS2><SKILLS><SKILL>Java</SKILL><SKILL>Scala</SKILL><SKILL>Python</SKILL></SKILLS><WALLET><ITEM>123</ITEM><ITEM>John Doe</ITEM><ITEM>2025-01-01</ITEM></WALLET><ASSETS><CARS>Ford</CARS><BOATS><BOAT>Brave Wave</BOAT><BOAT>Sharky</BOAT></BOATS><PLANES><AIRBUS><MODEL>A380</MODEL></AIRBUS></PLANES></ASSETS><BOOKS><BOOK><AUTHOR>Francis Scott Fitzgerald</AUTHOR><TITLE>The Great Gatsby</TITLE></BOOK><BOOK><AUTHOR>Harper Lee</AUTHOR><TITLE>To Kill a Mockingbird</TITLE></BOOK></BOOKS><BOOKATDESK><AUTHOR>A.A. Milne</AUTHOR><TITLE>Winnie the Pooh</TITLE></BOOKATDESK><HAND1>Left hand</HAND1><HAND2>Right hand</HAND2><STATUS>PENDING</STATUS><ACTIVE>yes</ACTIVE></PERSON>""".stripMargin
+      """<PERSON id="1234567890"><NAME>John Doe</NAME><AGE>30</AGE><STATURE>188.8</STATURE><EMAIL>john.doe@example.com</EMAIL><ADDRESS><STREET>123 &lt;Main&gt; St</STREET><CITY>&amp;Anytown</CITY><ZIPCODE>12345</ZIPCODE></ADDRESS><ADDRESSES><HOME><STREET>123 &lt;Main&gt; St</STREET><CITY>&amp;Anytown</CITY><ZIPCODE>12345</ZIPCODE></HOME><WORK><STREET>456 &lt;Main&gt; St</STREET><CITY>&amp;Anytown</CITY><ZIPCODE>12345</ZIPCODE></WORK></ADDRESSES><ISSTUDENT>false</ISSTUDENT><TAGS><TAG name="tag1&quot;">value1</TAG><TAG name="&lt;tag2&gt;">value2</TAG></TAGS><CITIZENSHIP>United Kingdom</CITIZENSHIP><CURRENT-IMMIGRATION-STATUS>permanent resident</CURRENT-IMMIGRATION-STATUS><IMMIGRATION-STATUS-VALID-UNTIL>2026-01-01</IMMIGRATION-STATUS-VALID-UNTIL><MARITAL><SINGLE></SINGLE><MARRIED><PARTNERNAME>Jane Doe</PARTNERNAME><FROM>2025-01-01</FROM></MARRIED></MARITAL><HOBBIES><HOBBY>Swimming</HOBBY><HOBBY>Cooking</HOBBY><HOBBY>Binge watching TV series</HOBBY></HOBBIES><HOBBY>Playing guitar</HOBBY><PASSPORTNUMBER>1234567890</PASSPORTNUMBER><DRIVERLICENSE expirydate="2026-12-31">abcdefghijklm</DRIVERLICENSE><DISABILITIES><DISABILITY>Blindness</DISABILITY><DISABILITY>Deafness</DISABILITY></DISABILITIES><DISABILITY>Blindness</DISABILITY><BENEFITS1><BENEFIT>ChildBenefit</BENEFIT><BENEFIT>UniversalCredit</BENEFIT></BENEFITS1><BENEFITS2>false</BENEFITS2><SKILLS><SKILL>Java</SKILL><SKILL>Scala</SKILL><SKILL>Python</SKILL></SKILLS><WALLET><ITEM>123</ITEM><ITEM>John Doe</ITEM><ITEM>2025-01-01</ITEM></WALLET><ASSETS><CARS>Ford</CARS><BOATS><BOAT>Brave Wave</BOAT><BOAT>Sharky</BOAT></BOATS><PLANES><AIRBUS><MODEL>A380</MODEL></AIRBUS></PLANES></ASSETS><BOOKS><BOOK><AUTHOR>Francis Scott Fitzgerald</AUTHOR><TITLE>The Great Gatsby</TITLE></BOOK><BOOK><AUTHOR>Harper Lee</AUTHOR><TITLE>To Kill a Mockingbird</TITLE></BOOK></BOOKS><BOOKATDESK><AUTHOR>A.A. Milne</AUTHOR><TITLE>Winnie the Pooh</TITLE></BOOKATDESK><HAND1>Left hand</HAND1><HAND2>Right hand</HAND2><STATUS>PENDING</STATUS><ACTIVE>yes</ACTIVE></PERSON>""".stripMargin
     )
   }
 
@@ -821,8 +1280,10 @@ class MacroXmlWriterSpec extends munit.FunSuite {
          |        <Int>2</Int>
          |        <Int>3</Int>
          |    </field12>
-         |    <key1>1</key1>
-         |    <key2>2</key2>
+         |    <field13>
+         |        <key1>1</key1>
+         |        <key2>2</key2>
+         |    </field13>
          |    <field14>
          |        <Double>1.0</Double>
          |        <Double>2.0</Double>
@@ -859,8 +1320,10 @@ class MacroXmlWriterSpec extends munit.FunSuite {
          |        <Double>2.0</Double>
          |        <Double>3.0</Double>
          |    </field22>
-         |    <1>value1</1>
-         |    <2>value2</2>
+         |    <field23>
+         |        <1>value1</1>
+         |        <2>value2</2>
+         |    </field23>
          |    <field24>
          |        <String>value1</String>
          |        <String>value2</String>

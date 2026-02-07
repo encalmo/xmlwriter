@@ -18,7 +18,7 @@ case class Person(
     @xmlTag("marital") @xmlNoItemTags maritalStatus: Array[
       MaritalStatus
     ],
-    hobbies: List[Hobby],
+    @xmlItemTag("Hobby") hobbies: List[Hobby],
     hobby: Hobby,
     passportNumber: Option[PassportNumber],
     driverLicense: Option[DriverLicense],
@@ -60,7 +60,7 @@ trait ImmigrationStatus {
 
 enum MaritalStatus {
   case Single
-  case CivilPartnership(partnerName: LocalDate, from: LocalDate)
+  case CivilPartnership(partnerName: String, from: LocalDate)
   case Married(partnerName: String, from: LocalDate)
   case Divorced(from: LocalDate)
   case Widowed(from: LocalDate)
@@ -71,7 +71,7 @@ enum Hobby {
   case Swimming
   case Cycling
   case Cooking
-  @xmlNoTagInsideCollection @xmlValueSelector("name") case Other(name: String)
+  @xmlContent @xmlValueSelector("name") case Other(name: String)
 }
 
 object ImmigrationStatus {
@@ -158,7 +158,7 @@ object Boats {
   def apply(values: String*): Boats = values.toSet
 }
 
-@xmlUseEnumCaseNames sealed trait Planes
+sealed trait Planes
 case class Boeing(model: String) extends Planes
 case class Airbus(model: String) extends Planes
 

@@ -5,21 +5,18 @@ object annotation {
   /** Annotation to mark a field as an XML attribute. */
   class xmlAttribute extends scala.annotation.StaticAnnotation
 
-  /** Annotation to mark a field as an XML element content. */
+  /** Annotation to mark a field as an XML element content, and skip wrapping it in opening/closing tags. */
   class xmlContent extends scala.annotation.StaticAnnotation
 
   /** Annotation to define the name of the XML element. */
   case class xmlTag(val name: String & Singleton) extends scala.annotation.StaticAnnotation
 
-  /** Annotation to omit this element tag when inside a collection or array. */
-  class xmlNoTagInsideCollection extends scala.annotation.StaticAnnotation
-
-  /** Annotation to define the name of the XML element wrapping each item in an array or collection.
+  /** Annotation to define the name of the XML element wrapping each item in an array or collection. This will override
+    * custom names of the items in the collection.
     */
   case class xmlItemTag(val name: String & Singleton) extends scala.annotation.StaticAnnotation
 
-  /** Annotation to switch off wrapping each item in an array or collection in a separate XML element.
-    */
+  /** Annotation to skip wrapping each item in an array or collection in its own tag. */
   class xmlNoItemTags extends scala.annotation.StaticAnnotation
 
   /** Annotation to define static value of the XML element, usefull for enums and case objects. */
@@ -29,8 +26,5 @@ object annotation {
     * Java-style getters.
     */
   case class xmlValueSelector(val property: String & Singleton) extends scala.annotation.StaticAnnotation
-
-  /** Annotation to use the case name of the enum value as the XML element tag. */
-  class xmlUseEnumCaseNames extends scala.annotation.StaticAnnotation
 
 }

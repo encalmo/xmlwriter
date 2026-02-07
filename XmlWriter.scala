@@ -11,13 +11,12 @@ object XmlWriter {
 
   import scala.quoted.*
 
-  @scala.annotation.nowarn
   inline def derived[T]: XmlWriter[T] = ${ derivedImpl[T] }
   private def derivedImpl[T: Type](using Quotes): Expr[XmlWriter[T]] = {
     '{
       new XmlWriter[T] {
         def write(name: String, value: T, createTag: Boolean)(using builder: XmlOutputBuilder): Unit =
-          ${ MacroXmlWriter.writeImpl[T]('{ name }, '{ value }, '{ builder }, false) }
+          ${ XmlWriterMacro.writeImpl[T]('{ name }, '{ value }, '{ builder }, false) }
       }
     }
   }
@@ -27,7 +26,7 @@ object XmlWriter {
       name: String,
       value: T
   )(using builder: XmlOutputBuilder): Unit = {
-    MacroXmlWriter.write[T](name, value)
+    XmlWriterMacro.write[T](name, value)
   }
 
   inline def writeIndented[T](
@@ -42,7 +41,7 @@ object XmlWriter {
           then "<?xml version='1.0' encoding='UTF-8'?>"
           else "" // No XML declaration if not requested
       )
-    MacroXmlWriter.write[T](value)
+    XmlWriterMacro.write[T](value)
     builder.result
   }
 
@@ -62,7 +61,7 @@ object XmlWriter {
           then "<?xml version='1.0' encoding='UTF-8'?>"
           else "" // No XML declaration if not requested
       )
-    MacroXmlWriter.write[T](value)
+    XmlWriterMacro.write[T](value)
     builder.result
   }
 
@@ -80,7 +79,7 @@ object XmlWriter {
           else "" // No XML declaration if not requested
       )
 
-    MacroXmlWriter.write[T](rootTagName, value)
+    XmlWriterMacro.write[T](rootTagName, value)
     builder.result
   }
 
@@ -98,7 +97,7 @@ object XmlWriter {
           then "<?xml version='1.0' encoding='UTF-8'?>"
           else "" // No XML declaration if not requested
       )
-    MacroXmlWriter.write[T](value)
+    XmlWriterMacro.write[T](value)
     builder.result
   }
 
@@ -118,7 +117,7 @@ object XmlWriter {
           else "" // No XML declaration if not requested
       )
 
-    MacroXmlWriter.write[T](rootTagName, value)
+    XmlWriterMacro.write[T](rootTagName, value)
     builder.result
   }
 
@@ -134,7 +133,7 @@ object XmlWriter {
           else "" // No XML declaration if not requested
       )
 
-    MacroXmlWriter.write[T](value)
+    XmlWriterMacro.write[T](value)
     builder.result
   }
 
@@ -154,7 +153,7 @@ object XmlWriter {
           else "" // No XML declaration if not requested
       )
 
-    MacroXmlWriter.write[T](value)
+    XmlWriterMacro.write[T](value)
     builder.result
   }
 
@@ -171,7 +170,7 @@ object XmlWriter {
           else "" // No XML declaration if not requested
       )
 
-    MacroXmlWriter.write[T](rootTagName, value)
+    XmlWriterMacro.write[T](rootTagName, value)
     builder.result
   }
 
@@ -189,7 +188,7 @@ object XmlWriter {
           else "" // No XML declaration if not requested
       )
 
-    MacroXmlWriter.write[T](value)
+    XmlWriterMacro.write[T](value)
     builder.result
   }
 
@@ -208,7 +207,7 @@ object XmlWriter {
           else "" // No XML declaration if not requested
       )
 
-    MacroXmlWriter.write[T](rootTagName, value)
+    XmlWriterMacro.write[T](rootTagName, value)
     builder.result
   }
 
