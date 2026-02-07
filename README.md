@@ -192,11 +192,11 @@ The example above produces the following code after macro expansion:
 
 Use with SBT
 
-    libraryDependencies += "org.encalmo" %% "xmlwriter" % "0.9.3"
+    libraryDependencies += "org.encalmo" %% "xmlwriter" % "0.10.0"
 
 or with SCALA-CLI
 
-    //> using dep org.encalmo::xmlwriter:0.9.3
+    //> using dep org.encalmo::xmlwriter:0.10.0
 
 ## More examples
 
