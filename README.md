@@ -1,4 +1,4 @@
-<a href="https://github.com/encalmo/xmlwriter">![GitHub](https://img.shields.io/badge/github-%23121011.svg?style=for-the-badge&logo=github&logoColor=white)</a> <a href="https://central.sonatype.com/artifact/org.encalmo/xmlwriter_3" target="_blank">![Maven Central Version](https://img.shields.io/maven-central/v/org.encalmo/xmlwriter_3?style=for-the-badge)</a> <a href="https://encalmo.github.io/xmlwriter/scaladoc/org/encalmo/writer/xml.html" target="_blank"><img alt="Scaladoc" src="https://img.shields.io/badge/docs-scaladoc-red?style=for-the-badge"></a>
+<a href="https://github.com/encalmo/xmlwriter">![GitHub](https://img.shields.io/badge/github-%23121011.svg?style=for-the-badge&logo=github&logoColor=white)</a> <a href="https://central.sonatype.com/artifact/org.encalmo/xmlwriter_3" target="_blank">![Maven Central Version](https://img.shields.io/maven-central/v/org.encalmo/xmlwriter_3?style=for-the-badge)</a> <a href="https://encalmo.github.io/xmlwriter/scaladoc/uk/gov/hmrc/charitiesclaims/models/chris.html" target="_blank"><img alt="Scaladoc" src="https://img.shields.io/badge/docs-scaladoc-red?style=for-the-badge"></a>
 
 # xmlwriter
 
@@ -186,7 +186,7 @@ The example above produces the following code after macro expansion:
 ## Dependencies
 
    - [Scala](https://www.scala-lang.org) >= 3.7.4
-   - org.encalmo [**macro-utils** 0.9.2](https://central.sonatype.com/artifact/org.encalmo/macro-utils_3)
+   - org.encalmo [**macro-utils** 0.9.43](https://central.sonatype.com/artifact/org.encalmo/macro-utils_3)
 
 ## Usage
 
@@ -370,9 +370,10 @@ Output:
 ├── .gitignore
 ├── .scalafmt.conf
 ├── annotation.scala
+├── ChRISSubmission.test.scala
+├── ChRISSubmissionSpec.test.scala
+├── Example.test.scala
 ├── LICENSE
-├── MacroXmlWriter.scala
-├── MacroXmlWriterSpec.test.scala
 ├── Order.java
 ├── project.scala
 ├── README.md
@@ -381,6 +382,8 @@ Output:
 ├── TestData.test.scala
 ├── TestModel.test.scala
 ├── XmlOutputBuilder.scala
-└── XmlWriter.scala
+├── XmlWriter.scala
+├── XmlWriterMacro.scala
+└── XmlWriterSpec.test.scala
 ```
 
