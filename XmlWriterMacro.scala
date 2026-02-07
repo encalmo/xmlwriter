@@ -252,9 +252,9 @@ object XmlWriterMacro {
           case MapUtils.TypeReprIsMap(keyTpe, valueTpe) =>
             writeMap(
               tpe = tpe,
+              valueTerm = valueTerm,
               keyTpe = keyTpe,
               valueTpe = valueTpe,
-              valueTerm = valueTerm,
               tagName = tagName2,
               builder = builder,
               hasTag = hasTag,
@@ -267,9 +267,9 @@ object XmlWriterMacro {
           case IterableUtils.TypeReprIsIterable(itemTpe) =>
             writeCollection(
               tpe = tpe,
+              valueTerm = valueTerm,
               itemTpe = itemTpe,
               tagName = tagName2,
-              valueTerm = valueTerm,
               builder = builder,
               hasTag = hasTag,
               isCollectionItem = isCollectionItem,
@@ -281,9 +281,9 @@ object XmlWriterMacro {
           case ArrayUtils.TypeReprIsArray(itemTpe) =>
             writeArray(
               tpe = tpe,
+              valueTerm = valueTerm,
               itemTpe = itemTpe,
               tagName = tagName2,
-              valueTerm = valueTerm,
               builder = builder,
               hasTag = hasTag,
               isCollectionItem = isCollectionItem,
@@ -298,8 +298,8 @@ object XmlWriterMacro {
             if shouldTag then builder.appendElementStartWithAttributes(tagName2, attributes)
             writeCaseClass(
               tpe = tpe,
-              tagName = tagName2,
               valueTerm = valueTerm,
+              tagName = tagName2,
               builder = builder,
               hasTag = !hasTag,
               isCollectionItem = isCollectionItem,
@@ -313,8 +313,8 @@ object XmlWriterMacro {
           case EnumUtils.TypeReprIsEnum() =>
             writeEnum(
               tpe = tpe,
-              tagName = tagName2,
               valueTerm = valueTerm,
+              tagName = tagName2,
               builder = builder,
               hasTag = hasTag,
               isCollectionItem = isCollectionItem,
@@ -327,8 +327,8 @@ object XmlWriterMacro {
             if shouldTag then builder.appendElementStart(tagName2)
             writeUnion(
               tpe = tpe,
-              tagName = tagName2,
               valueTerm = valueTerm,
+              tagName = tagName2,
               builder = builder,
               hasTag = !hasTag,
               isCollectionItem = isCollectionItem,
@@ -343,8 +343,8 @@ object XmlWriterMacro {
             writeSelectable(
               tpe = tpe,
               fields = fields,
-              tagName = tagName2,
               valueTerm = valueTerm,
+              tagName = tagName2,
               builder = builder,
               hasTag = hasTag,
               isCollectionItem = isCollectionItem,
@@ -358,8 +358,8 @@ object XmlWriterMacro {
             writeOpaqueType(
               tpe = tpe,
               upperBoundTpe = upperBoundTpe,
-              tagName = tagName2,
               valueTerm = valueTerm,
+              tagName = tagName2,
               builder = builder,
               hasTag = hasTag,
               isCollectionItem = isCollectionItem,
@@ -372,8 +372,8 @@ object XmlWriterMacro {
             if shouldTag then builder.appendElementStart(tagName2)
             writeJavaRecord(
               tpe = tpe,
-              tagName = tagName2,
               valueTerm = valueTerm,
+              tagName = tagName2,
               builder = builder,
               hasTag = hasTag,
               isCollectionItem = isCollectionItem,
@@ -388,8 +388,8 @@ object XmlWriterMacro {
               tpe = tpe,
               keyTpe = keyTpe,
               valueTpe = valueTpe,
-              tagName = tagName2,
               valueTerm = valueTerm,
+              tagName = tagName2,
               builder = builder,
               hasTag = hasTag,
               isCollectionItem = isCollectionItem,
@@ -402,8 +402,8 @@ object XmlWriterMacro {
             writeJavaIterable(
               tpe = tpe,
               itemTpe = itemTpe,
-              tagName = tagName2,
               valueTerm = valueTerm,
+              tagName = tagName2,
               builder = builder,
               hasTag = hasTag,
               isCollectionItem = isCollectionItem,
@@ -416,8 +416,8 @@ object XmlWriterMacro {
             // default to writing the string representation of the value
             writeAsString(
               tpe = tpe,
-              tagName = tagName2,
               valueTerm = valueTerm.methodCall("toString", List()).toTerm,
+              tagName = tagName2,
               builder = builder,
               hasTag = hasTag,
               isCollectionItem = isCollectionItem,
@@ -452,8 +452,8 @@ object XmlWriterMacro {
                   )
                   writeType(
                     tpe = tpe,
-                    tagName = tagName,
                     valueTerm = value,
+                    tagName = tagName,
                     builder = builder,
                     hasTag = hasTag,
                     isCollectionItem = isCollectionItem,
@@ -504,8 +504,8 @@ object XmlWriterMacro {
       cache: StatementsCache
   )(
       tpe: cache.quotes.reflect.TypeRepr,
-      tagName: TagName,
       valueTerm: cache.quotes.reflect.Term,
+      tagName: TagName,
       builder: Builder,
       hasTag: Boolean,
       isCollectionItem: Boolean,
@@ -556,8 +556,8 @@ object XmlWriterMacro {
       cache: StatementsCache
   )(
       tpe: cache.quotes.reflect.TypeRepr,
-      tagName: TagName,
       valueTerm: cache.quotes.reflect.Term,
+      tagName: TagName,
       builder: Builder,
       hasTag: Boolean,
       isCollectionItem: Boolean,
@@ -611,8 +611,8 @@ object XmlWriterMacro {
       outer: StatementsCache
   )(
       tpe: outer.quotes.reflect.TypeRepr,
-      tagName: TagName,
       valueTerm: outer.quotes.reflect.Term,
+      tagName: TagName,
       builder: Builder,
       hasTag: Boolean,
       isCollectionItem: Boolean,
@@ -647,13 +647,7 @@ object XmlWriterMacro {
                 {
                   val allAnnotations = currentAnnotations ++ annotations
 
-                  debug(
-                    trace,
-                    debugIndent,
-                    tpe,
-                    name,
-                    "writeEnum/functionWhenCaseValue"
-                  )
+                  debug(trace, debugIndent, tpe, name, "writeEnum/functionWhenCaseValue")
 
                   val customTagValue: Option[cache.quotes.reflect.Term] =
                     allAnnotations.getTerm[annotation.xmlValue](parameter = "value")
@@ -683,19 +677,13 @@ object XmlWriterMacro {
                 {
                   val allAnnotations = currentAnnotations ++ annotations
 
-                  debug(
-                    trace,
-                    debugIndent,
-                    tpe,
-                    name,
-                    "writeEnum/functionWhenCaseClass"
-                  )
+                  debug(trace, debugIndent, tpe, name, "writeEnum/functionWhenCaseClass")
 
                   val body = block {
                     writeType(
                       tpe = tpe.toTypeRepr,
-                      tagName = name,
                       valueTerm = value.toTerm,
+                      tagName = name,
                       builder = builder,
                       hasTag = false,
                       isCollectionItem = isCollectionItem,
@@ -728,8 +716,8 @@ object XmlWriterMacro {
       outer: StatementsCache
   )(
       tpe: outer.quotes.reflect.TypeRepr,
-      tagName: TagName,
       valueTerm: outer.quotes.reflect.Term,
+      tagName: TagName,
       builder: Builder,
       hasTag: Boolean,
       isCollectionItem: Boolean,
@@ -759,8 +747,8 @@ object XmlWriterMacro {
                 block(
                   writeType(
                     tpe = tpe.toTypeRepr,
-                    tagName = tagName,
                     valueTerm = value.toTerm,
+                    tagName = tagName,
                     builder = builder,
                     hasTag = hasTag,
                     isCollectionItem = isCollectionItem,
@@ -781,8 +769,8 @@ object XmlWriterMacro {
       cache: StatementsCache
   )(
       tpe: cache.quotes.reflect.TypeRepr,
-      tagName: TagName,
       valueTerm: cache.quotes.reflect.Term,
+      tagName: TagName,
       builder: Builder,
       hasTag: Boolean,
       isCollectionItem: Boolean,
@@ -806,8 +794,8 @@ object XmlWriterMacro {
           block {
             writeType(
               tpe = tpe.toTypeRepr,
-              tagName = itemLabel,
               valueTerm = value.toTerm,
+              tagName = itemLabel,
               builder = builder,
               hasTag = hasTag,
               isCollectionItem = isCollectionItem,
@@ -828,8 +816,8 @@ object XmlWriterMacro {
       tpe: cache.quotes.reflect.TypeRepr,
       leftTpe: cache.quotes.reflect.TypeRepr,
       rightTpe: cache.quotes.reflect.TypeRepr,
-      tagName: TagName,
       valueTerm: cache.quotes.reflect.Term,
+      tagName: TagName,
       builder: Builder,
       hasTag: Boolean,
       isCollectionItem: Boolean,
@@ -855,8 +843,8 @@ object XmlWriterMacro {
             block(
               writeType(
                 tpe = leftTpe.toTypeRepr,
-                tagName = itemLabel,
                 valueTerm = value.toTerm,
+                tagName = itemLabel,
                 builder = builder,
                 hasTag = hasTag,
                 isCollectionItem = isCollectionItem,
@@ -877,8 +865,8 @@ object XmlWriterMacro {
             block(
               writeType(
                 tpe = rightTpe.toTypeRepr,
-                tagName = itemLabel,
                 valueTerm = value.toTerm,
+                tagName = itemLabel,
                 builder = builder,
                 hasTag = hasTag,
                 isCollectionItem = isCollectionItem,
@@ -898,8 +886,8 @@ object XmlWriterMacro {
   )(
       tpe: cache.quotes.reflect.TypeRepr,
       itemTpe: cache.quotes.reflect.TypeRepr,
-      tagName: TagName,
       valueTerm: cache.quotes.reflect.Term,
+      tagName: TagName,
       builder: Builder,
       hasTag: Boolean,
       isCollectionItem: Boolean,
@@ -918,13 +906,7 @@ object XmlWriterMacro {
     val isXmlContent = currentAnnotations.exists[annotation.xmlContent]
     val shouldTag = !hasTag && !isXmlContent
 
-    debug(
-      trace,
-      debugIndent,
-      tpe,
-      tagName,
-      "writeCollection"
-    )
+    debug(trace, debugIndent, tpe, tagName, "writeCollection")
 
     if shouldTag then builder.appendElementStart(tagName)
     cache.put(
@@ -936,8 +918,8 @@ object XmlWriterMacro {
           block {
             writeType(
               tpe = tpe.toTypeRepr,
-              tagName = typeNameOf(tpe),
               valueTerm = value.toTerm,
+              tagName = typeNameOf(tpe),
               builder = builder,
               hasTag = skipItemTags,
               isCollectionItem = true,
@@ -957,8 +939,8 @@ object XmlWriterMacro {
   )(
       tpe: cache.quotes.reflect.TypeRepr,
       itemTpe: cache.quotes.reflect.TypeRepr,
-      tagName: TagName,
       valueTerm: cache.quotes.reflect.Term,
+      tagName: TagName,
       builder: Builder,
       hasTag: Boolean,
       isCollectionItem: Boolean,
@@ -990,8 +972,8 @@ object XmlWriterMacro {
           block {
             writeType(
               tpe = tpe.toTypeRepr,
-              tagName = itemLabel,
               valueTerm = value.toTerm,
+              tagName = itemLabel,
               builder = builder,
               hasTag = skipItemTags,
               isCollectionItem = true,
@@ -1012,8 +994,8 @@ object XmlWriterMacro {
       tpe: cache.quotes.reflect.TypeRepr,
       keyTpe: cache.quotes.reflect.TypeRepr,
       valueTpe: cache.quotes.reflect.TypeRepr,
-      tagName: TagName,
       valueTerm: cache.quotes.reflect.Term,
+      tagName: TagName,
       builder: Builder,
       hasTag: Boolean,
       isCollectionItem: Boolean,
@@ -1039,8 +1021,8 @@ object XmlWriterMacro {
           block {
             writeType(
               tpe = valueTpe.toTypeRepr,
-              tagName = TagName(StringUtils.applyToString(key.toTerm)),
               valueTerm = value.toTerm,
+              tagName = TagName(StringUtils.applyToString(key.toTerm)),
               builder = builder,
               hasTag = skipItemTags,
               isCollectionItem = true,
@@ -1060,8 +1042,8 @@ object XmlWriterMacro {
   )(
       tpe: cache.quotes.reflect.TypeRepr,
       itemTpe: cache.quotes.reflect.TypeRepr,
-      tagName: TagName,
       valueTerm: cache.quotes.reflect.Term,
+      tagName: TagName,
       builder: Builder,
       hasTag: Boolean,
       isCollectionItem: Boolean,
@@ -1093,8 +1075,8 @@ object XmlWriterMacro {
           block {
             writeType(
               tpe = tpe.toTypeRepr,
-              tagName = itemLabel,
               valueTerm = value.toTerm,
+              tagName = itemLabel,
               builder = builder,
               hasTag = skipItemTags,
               isCollectionItem = true,
@@ -1115,8 +1097,8 @@ object XmlWriterMacro {
       tpe: cache.quotes.reflect.TypeRepr,
       keyTpe: cache.quotes.reflect.TypeRepr,
       valueTpe: cache.quotes.reflect.TypeRepr,
-      tagName: TagName,
       valueTerm: cache.quotes.reflect.Term,
+      tagName: TagName,
       builder: Builder,
       hasTag: Boolean,
       isCollectionItem: Boolean,
@@ -1142,8 +1124,8 @@ object XmlWriterMacro {
           block {
             writeType(
               tpe = valueTpe.toTypeRepr,
-              tagName = TagName(StringUtils.applyToString(key.toTerm)),
               valueTerm = value.toTerm,
+              tagName = TagName(StringUtils.applyToString(key.toTerm)),
               builder = builder,
               hasTag = skipItemTags,
               isCollectionItem = true,
@@ -1163,8 +1145,8 @@ object XmlWriterMacro {
       cache: StatementsCache
   )(
       tpe: cache.quotes.reflect.TypeRepr,
-      tagName: TagName,
       valueTerm: cache.quotes.reflect.Term,
+      tagName: TagName,
       builder: Builder,
       hasTag: Boolean,
       isCollectionItem: Boolean,
@@ -1195,8 +1177,8 @@ object XmlWriterMacro {
         debug(trace, debugIndent, tpe, name.getOrElse("unknown"), "writeTuple/functionWhenTuple")
         writeType(
           tpe = tpe.toTypeRepr,
-          tagName = name.getOrElse(typeNameOf(tpe)),
           valueTerm = value,
+          tagName = name.getOrElse(typeNameOf(tpe)),
           builder = builder,
           hasTag = skipItemTags,
           isCollectionItem = true,
@@ -1209,8 +1191,8 @@ object XmlWriterMacro {
         debug(trace, debugIndent, tpe, name.getOrElse("unknown"), "writeTuple/functionWhenNamedTuple")
         writeType(
           tpe = tpe.toTypeRepr,
-          tagName = name.getOrElse(typeNameOf(tpe)),
           valueTerm = value,
+          tagName = name.getOrElse(typeNameOf(tpe)),
           builder = builder,
           hasTag = skipItemTags,
           isCollectionItem = false,
@@ -1231,8 +1213,8 @@ object XmlWriterMacro {
   )(
       tpe: cache.quotes.reflect.TypeRepr,
       fields: cache.quotes.reflect.TypeRepr,
-      tagName: TagName,
       valueTerm: cache.quotes.reflect.Term,
+      tagName: TagName,
       builder: Builder,
       hasTag: Boolean,
       isCollectionItem: Boolean,
@@ -1261,8 +1243,8 @@ object XmlWriterMacro {
             functionOnField = { (tpe, name, value) =>
               writeType(
                 tpe = tpe.toTypeRepr,
-                tagName = name,
                 valueTerm = value,
+                tagName = name,
                 builder = builder,
                 hasTag = hasTag,
                 isCollectionItem = isCollectionItem,
@@ -1280,9 +1262,9 @@ object XmlWriterMacro {
   def writeJavaRecord(using
       cache: StatementsCache
   )(
-      tagName: TagName,
       tpe: cache.quotes.reflect.TypeRepr,
       valueTerm: cache.quotes.reflect.Term,
+      tagName: TagName,
       builder: Builder,
       hasTag: Boolean,
       isCollectionItem: Boolean,
@@ -1311,8 +1293,8 @@ object XmlWriterMacro {
             functionOnField = { (tpe, name, value) =>
               writeType(
                 tpe = tpe.toTypeRepr,
-                tagName = name,
                 valueTerm = value,
+                tagName = name,
                 builder = builder,
                 hasTag = hasTag,
                 isCollectionItem = isCollectionItem,
@@ -1335,8 +1317,8 @@ object XmlWriterMacro {
   )(
       tpe: cache.quotes.reflect.TypeRepr,
       upperBoundTpe: Option[cache.quotes.reflect.TypeRepr],
-      tagName: TagName,
       valueTerm: cache.quotes.reflect.Term,
+      tagName: TagName,
       builder: Builder,
       hasTag: Boolean,
       isCollectionItem: Boolean,
@@ -1351,8 +1333,8 @@ object XmlWriterMacro {
       case Some(upperBoundTpe) =>
         writeType(
           tpe = upperBoundTpe,
-          tagName = tagName,
           valueTerm = valueTerm,
+          tagName = tagName,
           builder = builder,
           hasTag = hasTag,
           isCollectionItem = isCollectionItem,
@@ -1364,8 +1346,8 @@ object XmlWriterMacro {
       case None =>
         writeAsString(
           tpe = tpe,
-          tagName = tagName,
           valueTerm = valueTerm.methodCall("toString", List()).toTerm,
+          tagName = tagName,
           builder = builder,
           hasTag = hasTag,
           isCollectionItem = isCollectionItem,
