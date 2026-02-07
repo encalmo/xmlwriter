@@ -59,6 +59,32 @@ class XmlWriterSpec extends munit.FunSuite {
     )
   }
 
+  test("write the same case class with different element tag names") {
+    case class Tool(name: String, weight: Double)
+    case class ToolBox(hammer: Tool, screwdriver: Tool)
+    val entity =
+      ToolBox(
+        hammer = Tool(name = "Hammer", weight = 10.0),
+        screwdriver = Tool(name = "Screwdriver", weight = 2.0)
+      )
+    val xml = XmlWriter.writeIndented(entity)
+    println(xml)
+    assertEquals(
+      xml,
+      """|<?xml version='1.0' encoding='UTF-8'?>
+         |<ToolBox>
+         |    <hammer>
+         |        <name>Hammer</name>
+         |        <weight>10.0</weight>
+         |    </hammer>
+         |    <screwdriver>
+         |        <name>Screwdriver</name>
+         |        <weight>2.0</weight>
+         |    </screwdriver>
+         |</ToolBox>""".stripMargin
+    )
+  }
+
   test("write a type alias") {
     type Name = String
     val entity: Name = "John Doe"

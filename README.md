@@ -183,6 +183,56 @@ The example above produces the following code after macro expansion:
 - trait [`XmlOutputBuilder`](XmlOutputBuilder.scala) defines low-level API for constructing XML output,
 - object `XmlOutputBuilder` provides a set of default implementations of `XmlOutputBuilder` trait producing indented or compact format, building a `String` or writing directly to the `java.io.OutputStream`
 
+## How do we tag elements?
+
+### Root element tag
+
+Root tag can be either provided by the user or derived from the type name.
+```scala
+case class Foo(bar: String)
+val entity = Foo("HELLO")
+
+// <Foo><bar>HELLO</bar></Foo>
+val xml1 = XmlWriter.writeIndented(entity) 
+
+// <Example><bar>HELLO</bar></Example>
+val xml2 = XmlWriter.writeIndentedUsingRootTagName("Example", entity, addXmlDeclaration = false)
+```
+
+## Nested elements
+
+Nested elements borrow tag name either from:
+- field name of case classes, selectables or records
+- enum case name or value
+- declared type name (including type aliases and opaque types)
+- keys of the map
+- @xmlTag and @xmlItemTag annotations
+
+```scala
+case class Tool(name: String, weight: Double)
+case class ToolBox(hammer: Tool, screwdriver: Tool)
+val entity =
+  ToolBox(
+    hammer = Tool(name = "Hammer", weight = 10.0),
+    screwdriver = Tool(name = "Screwdriver", weight = 2.0)
+  )
+val xml = XmlWriter.writeIndented(entity)
+println(xml)
+```
+```xml
+<?xml version='1.0' encoding='UTF-8'?>
+<ToolBox>
+    <hammer>
+        <name>Hammer</name>
+        <weight>10.0</weight>
+    </hammer>
+    <screwdriver>
+        <name>Screwdriver</name>
+        <weight>2.0</weight>
+    </screwdriver>
+</ToolBox>
+```
+
 ## Dependencies
 
    - [Scala](https://www.scala-lang.org) >= 3.7.4
