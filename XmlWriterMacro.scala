@@ -293,21 +293,17 @@ object XmlWriterMacro {
             )
 
           case CaseClassUtils.TypeReprIsCaseClass() => {
-            // prepare list of attributes for the xml opening tag
-            val attributes: cache.quotes.reflect.Term = collectAttributesFromCaseClass(tpe, valueTerm)
-            if shouldTag then builder.appendElementStartWithAttributes(tagName2, attributes)
             writeCaseClass(
               tpe = tpe,
               valueTerm = valueTerm,
               tagName = tagName2,
               builder = builder,
-              hasTag = !hasTag,
+              hasTag = !shouldTag,
               isCollectionItem = isCollectionItem,
               trace = trace,
               currentAnnotations = allAnnotations,
               debugIndent = debugIndent
             )
-            if shouldTag then builder.appendElementEnd(tagName2)
           }
 
           case EnumUtils.TypeReprIsEnum() =>
@@ -324,35 +320,31 @@ object XmlWriterMacro {
             )
 
           case UnionUtils.TypeReprIsUnion(_) =>
-            if shouldTag then builder.appendElementStart(tagName2)
             writeUnion(
               tpe = tpe,
               valueTerm = valueTerm,
               tagName = tagName2,
               builder = builder,
-              hasTag = !hasTag,
+              hasTag = !shouldTag,
               isCollectionItem = isCollectionItem,
               trace = trace,
               currentAnnotations = allAnnotations,
               debugIndent = debugIndent
             )
-            if shouldTag then builder.appendElementEnd(tagName2)
 
           case SelectableUtils.TypeReprIsSelectable(fields) =>
-            if shouldTag then builder.appendElementStart(tagName2)
             writeSelectable(
               tpe = tpe,
               fields = fields,
               valueTerm = valueTerm,
               tagName = tagName2,
               builder = builder,
-              hasTag = hasTag,
+              hasTag = !shouldTag,
               isCollectionItem = isCollectionItem,
               trace = trace,
               currentAnnotations = allAnnotations,
               debugIndent = debugIndent
             )
-            if shouldTag then builder.appendElementEnd(tagName2)
 
           case OpaqueTypeUtils.TypeReprIsOpaqueType(upperBoundTpe) =>
             writeOpaqueType(
@@ -369,19 +361,17 @@ object XmlWriterMacro {
             )
 
           case JavaRecordUtils.TypeReprIsJavaRecord() =>
-            if shouldTag then builder.appendElementStart(tagName2)
             writeJavaRecord(
               tpe = tpe,
               valueTerm = valueTerm,
               tagName = tagName2,
               builder = builder,
-              hasTag = hasTag,
+              hasTag = !shouldTag,
               isCollectionItem = isCollectionItem,
               trace = trace,
               currentAnnotations = allAnnotations,
               debugIndent = debugIndent
             )
-            if shouldTag then builder.appendElementEnd(tagName2)
 
           case JavaMapUtils.TypeReprIsJavaMap(keyTpe, valueTpe) =>
             writeJavaMap(
@@ -569,6 +559,12 @@ object XmlWriterMacro {
     import cache.quotes.reflect.*
     debug(trace, debugIndent, tpe, tagName, "writeCaseClass")
 
+    // prepare list of attributes for the xml opening tag
+    if !hasTag then {
+      val attributes: cache.quotes.reflect.Term = collectAttributesFromCaseClass(tpe, valueTerm)
+      builder.appendElementStartWithAttributes(tagName, attributes)
+    }
+
     cache.putMethodCallOf[Unit](
       createMethodName("CaseClass", tpe, currentAnnotations),
       List(valueNameOf(tpe)),
@@ -605,6 +601,7 @@ object XmlWriterMacro {
       ,
       scope = StatementsCache.Scope.TopLevel
     )
+    if !hasTag then builder.appendElementEnd(tagName)
   }
 
   def writeEnum(using
@@ -729,6 +726,7 @@ object XmlWriterMacro {
     import outer.quotes.reflect.*
     debug(trace, debugIndent, tpe, tagName, "writeUnion")
 
+    if !hasTag then builder.appendElementStart(tagName)
     outer.putMethodCallOf[Unit](
       createMethodName("Union", tpe, currentAnnotations),
       List(valueNameOf(tpe)),
@@ -750,7 +748,7 @@ object XmlWriterMacro {
                     valueTerm = value.toTerm,
                     tagName = tagName,
                     builder = builder,
-                    hasTag = hasTag,
+                    hasTag = !hasTag,
                     isCollectionItem = isCollectionItem,
                     currentAnnotations = AnnotationUtils.annotationsOf(tpe.toTypeRepr) ++ currentAnnotations,
                     trace = trace,
@@ -763,6 +761,7 @@ object XmlWriterMacro {
         },
       scope = StatementsCache.Scope.TopLevel
     )
+    if !hasTag then builder.appendElementEnd(tagName)
   }
 
   def writeOption(using
@@ -1226,6 +1225,7 @@ object XmlWriterMacro {
     import cache.quotes.reflect.*
     debug(trace, debugIndent, tpe, tagName, "writeSelectable")
 
+    if !hasTag then builder.appendElementStart(tagName)
     cache.putMethodCallOf[Unit](
       createMethodName("Selectable", tpe, currentAnnotations),
       List(valueNameOf(tpe)),
@@ -1246,7 +1246,7 @@ object XmlWriterMacro {
                 valueTerm = value,
                 tagName = name,
                 builder = builder,
-                hasTag = hasTag,
+                hasTag = false,
                 isCollectionItem = isCollectionItem,
                 currentAnnotations = currentAnnotations,
                 trace = trace,
@@ -1257,6 +1257,7 @@ object XmlWriterMacro {
       ,
       scope = StatementsCache.Scope.TopLevel
     )
+    if !hasTag then builder.appendElementEnd(tagName)
   }
 
   def writeJavaRecord(using
@@ -1276,6 +1277,7 @@ object XmlWriterMacro {
     import cache.quotes.reflect.*
     debug(trace, debugIndent, tpe, tagName, "writeJavaRecord")
 
+    if !hasTag then builder.appendElementStart(tagName)
     cache.putMethodCallOf[Unit](
       createMethodName("Record", tpe, currentAnnotations),
       List(valueNameOf(tpe)),
@@ -1296,7 +1298,7 @@ object XmlWriterMacro {
                 valueTerm = value,
                 tagName = name,
                 builder = builder,
-                hasTag = hasTag,
+                hasTag = false,
                 isCollectionItem = isCollectionItem,
                 currentAnnotations = currentAnnotations,
                 trace = trace,
@@ -1307,6 +1309,7 @@ object XmlWriterMacro {
       ,
       scope = StatementsCache.Scope.TopLevel
     )
+    if !hasTag then builder.appendElementEnd(tagName)
   }
 
   /** Write Scala opaque types, if there is an upper bound, write the upper bound, otherwise write the string
