@@ -1,4 +1,4 @@
-<a href="https://github.com/encalmo/xmlwriter">![GitHub](https://img.shields.io/badge/github-%23121011.svg?style=for-the-badge&logo=github&logoColor=white)</a> <a href="https://central.sonatype.com/artifact/org.encalmo/xmlwriter_3" target="_blank">![Maven Central Version](https://img.shields.io/maven-central/v/org.encalmo/xmlwriter_3?style=for-the-badge)</a> <a href="https://encalmo.github.io/xmlwriter/scaladoc/uk/gov/hmrc/charitiesclaims/models/chris.html" target="_blank"><img alt="Scaladoc" src="https://img.shields.io/badge/docs-scaladoc-red?style=for-the-badge"></a>
+<a href="https://github.com/encalmo/xmlwriter">![GitHub](https://img.shields.io/badge/github-%23121011.svg?style=for-the-badge&logo=github&logoColor=white)</a> <a href="https://central.sonatype.com/artifact/org.encalmo/xmlwriter_3" target="_blank">![Maven Central Version](https://img.shields.io/maven-central/v/org.encalmo/xmlwriter_3?style=for-the-badge)</a> <a href="https://encalmo.github.io/xmlwriter/scaladoc/org/encalmo/writer/xml.html" target="_blank"><img alt="Scaladoc" src="https://img.shields.io/badge/docs-scaladoc-red?style=for-the-badge"></a>
 
 # xmlwriter
 
@@ -239,17 +239,17 @@ println(xml)
 ## Dependencies
 
    - [Scala](https://www.scala-lang.org) >= 3.7.4
-   - org.encalmo [**macro-utils** 0.9.43](https://central.sonatype.com/artifact/org.encalmo/macro-utils_3)
+   - org.encalmo [**macro-utils** 0.10.5](https://central.sonatype.com/artifact/org.encalmo/macro-utils_3)
 
 ## Usage
 
 Use with SBT
 
-    libraryDependencies += "org.encalmo" %% "xmlwriter" % "0.10.0"
+    libraryDependencies += "org.encalmo" %% "xmlwriter" % "0.11.0"
 
 or with SCALA-CLI
 
-    //> using dep org.encalmo::xmlwriter:0.10.0
+    //> using dep org.encalmo::xmlwriter:0.11.0
 
 ## More examples
 
@@ -423,20 +423,24 @@ Output:
 ├── .gitignore
 ├── .scalafmt.conf
 ├── annotation.scala
-├── ChRISSubmission.test.scala
-├── ChRISSubmissionSpec.test.scala
-├── Example.test.scala
+├── ExampleModel.test.scala
+├── ExampleModelSpec.test.scala
 ├── LICENSE
 ├── Order.java
 ├── project.scala
 ├── README.md
+├── SimpleTypeTreeVisitor.scala
 ├── Status.java
+├── TagName.scala
 ├── test.sh
 ├── TestData.test.scala
 ├── TestModel.test.scala
+├── TypeTreeIterator.scala
+├── TypeTreeVisitor.scala
 ├── XmlOutputBuilder.scala
 ├── XmlWriter.scala
 ├── XmlWriterMacro.scala
+├── XmlWriterMacroVisitor.scala
 └── XmlWriterSpec.test.scala
 ```
 
