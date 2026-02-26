@@ -7,6 +7,64 @@ import java.nio.charset.StandardCharsets
 
 class XmlWriterSpec extends munit.FunSuite {
 
+  test("write the simplest case class") {
+
+    case class Employee(
+        name: String,
+        age: Int,
+        active: Boolean
+    )
+
+    val entity = Employee(
+      name = "John Doe",
+      age = 30,
+      active = true
+    )
+    val xml = XmlWriter.writeIndented(entity)
+    println(xml)
+    assertEquals(
+      xml,
+      """|<?xml version='1.0' encoding='UTF-8'?>
+         |<Employee>
+         |    <name>John Doe</name>
+         |    <age>30</age>
+         |    <active>true</active>
+         |</Employee>""".stripMargin
+    )
+  }
+
+  test("write simple generic case class") {
+    case class Example[A](value: A)
+    val entity = Example(value = "test")
+    val xml = XmlWriter.writeIndented(entity)
+    println(xml)
+    assertEquals(
+      xml,
+      """|<?xml version='1.0' encoding='UTF-8'?>
+         |<Example>
+         |    <value>test</value>
+         |</Example>""".stripMargin
+    )
+  }
+
+  test("write simple generic case class with class type parameter") {
+    case class Example[A](value: A)
+    val entity = Example(value = Address(street = "123 Main St", city = "Anytown", postcode = "12345"))
+    val xml = XmlWriter.writeIndented(entity)
+    println(xml)
+    assertEquals(
+      xml,
+      """|<?xml version='1.0' encoding='UTF-8'?>
+         |<Example>
+         |    <value>
+         |        <street>123 Main St</street>
+         |        <city>Anytown</city>
+         |        <zipcode>12345</zipcode>
+         |    </value>
+         |</Example>""".stripMargin
+    )
+  }
+
   test("write simple case class") {
 
     case class Address(
