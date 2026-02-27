@@ -16,7 +16,9 @@ trait TypeTreeVisitor {
   def createVariableNamePrefix(using cache: StatementsCache)(context: Context): String
 
   /** Before visiting a node in the type tree. */
-  def beforeNode(using cache: StatementsCache)(annotations: Set[AnnotationInfo], context: Context): Context
+  def beforeNode(using
+      cache: StatementsCache
+  )(annotations: Set[AnnotationInfo], context: Context): (Context, Set[AnnotationInfo])
 
   /** After visiting a node in the type tree. */
   def afterNode(using cache: StatementsCache)(annotations: Set[AnnotationInfo], context: Context): Unit

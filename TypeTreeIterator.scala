@@ -65,7 +65,7 @@ object TypeTreeIterator {
     val valueAnnotations = getValueAnnotations(valueTerm)
     val allAnnotations = typeAnnotations ++ valueAnnotations ++ annotations
 
-    val context2 = visitor.beforeNode(allAnnotations, context)
+    val (context2, currentAnnotations) = visitor.beforeNode(allAnnotations, context)
 
     if (debugIndent >= 0) then
       trace.append(
@@ -107,7 +107,7 @@ object TypeTreeIterator {
             context = context2,
             isCollectionItem = isCollectionItem,
             trace = trace,
-            annotations = allAnnotations,
+            annotations = currentAnnotations,
             debugIndent = debugIndent
           )
 
@@ -118,7 +118,7 @@ object TypeTreeIterator {
             context = context2,
             isCollectionItem = isCollectionItem,
             trace = trace,
-            annotations = allAnnotations,
+            annotations = currentAnnotations,
             debugIndent = debugIndent
           )
 
@@ -130,7 +130,7 @@ object TypeTreeIterator {
             context = context2,
             isCollectionItem = isCollectionItem,
             trace = trace,
-            annotations = allAnnotations,
+            annotations = currentAnnotations,
             debugIndent = debugIndent
           )
 
@@ -143,7 +143,7 @@ object TypeTreeIterator {
             context = context2,
             isCollectionItem = isCollectionItem,
             trace = trace,
-            annotations = allAnnotations,
+            annotations = currentAnnotations,
             debugIndent = debugIndent
           )
 
@@ -156,7 +156,7 @@ object TypeTreeIterator {
             context = context2,
             isCollectionItem = isCollectionItem,
             trace = trace,
-            annotations = allAnnotations,
+            annotations = currentAnnotations,
             debugIndent = debugIndent
           )
 
@@ -168,7 +168,7 @@ object TypeTreeIterator {
             context = context2,
             isCollectionItem = isCollectionItem,
             trace = trace,
-            annotations = allAnnotations,
+            annotations = currentAnnotations,
             debugIndent = debugIndent
           )
 
@@ -180,7 +180,7 @@ object TypeTreeIterator {
             context = context2,
             isCollectionItem = isCollectionItem,
             trace = trace,
-            annotations = allAnnotations,
+            annotations = currentAnnotations,
             debugIndent = debugIndent
           )
 
@@ -191,7 +191,7 @@ object TypeTreeIterator {
             context = context2,
             isCollectionItem = isCollectionItem,
             trace = trace,
-            annotations = allAnnotations,
+            annotations = currentAnnotations,
             debugIndent = debugIndent
           )
         }
@@ -203,7 +203,7 @@ object TypeTreeIterator {
             context = context2,
             isCollectionItem = isCollectionItem,
             trace = trace,
-            annotations = allAnnotations,
+            annotations = currentAnnotations,
             debugIndent = debugIndent
           )
 
@@ -214,7 +214,7 @@ object TypeTreeIterator {
             context = context2,
             isCollectionItem = isCollectionItem,
             trace = trace,
-            annotations = allAnnotations,
+            annotations = currentAnnotations,
             debugIndent = debugIndent
           )
 
@@ -226,7 +226,7 @@ object TypeTreeIterator {
             context = context2,
             isCollectionItem = isCollectionItem,
             trace = trace,
-            annotations = allAnnotations,
+            annotations = currentAnnotations,
             debugIndent = debugIndent
           )
 
@@ -238,7 +238,7 @@ object TypeTreeIterator {
             context = context2,
             isCollectionItem = isCollectionItem,
             trace = trace,
-            annotations = allAnnotations,
+            annotations = currentAnnotations,
             debugIndent = debugIndent
           )
 
@@ -249,7 +249,7 @@ object TypeTreeIterator {
             context = context2,
             isCollectionItem = isCollectionItem,
             trace = trace,
-            annotations = allAnnotations,
+            annotations = currentAnnotations,
             debugIndent = debugIndent
           )
 
@@ -262,7 +262,7 @@ object TypeTreeIterator {
             context = context2,
             isCollectionItem = isCollectionItem,
             trace = trace,
-            annotations = allAnnotations,
+            annotations = currentAnnotations,
             debugIndent = debugIndent
           )
 
@@ -274,7 +274,7 @@ object TypeTreeIterator {
             context = context2,
             isCollectionItem = isCollectionItem,
             trace = trace,
-            annotations = allAnnotations,
+            annotations = currentAnnotations,
             debugIndent = debugIndent
           )
 
@@ -296,7 +296,7 @@ object TypeTreeIterator {
         .maybeProcessNodeDirectly(
           tpe = tpe,
           valueTerm = valueTerm,
-          annotations = allAnnotations,
+          annotations = currentAnnotations,
           isCollectionItem = isCollectionItem,
           context = context2,
           visitNode = visitNodeFunction(trace, debugIndent + 1)

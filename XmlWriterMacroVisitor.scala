@@ -49,7 +49,7 @@ class XmlWriterMacroVisitor extends TypeTreeVisitor {
 
   inline override def beforeNode(using
       cache: StatementsCache
-  )(annotations: Set[AnnotationInfo], context: XmlWriterMacroContext): XmlWriterMacroContext = {
+  )(annotations: Set[AnnotationInfo], context: XmlWriterMacroContext): (XmlWriterMacroContext, Set[AnnotationInfo]) = {
     given cache.quotes.type = cache.quotes
 
     val tagNameCandidate2: Option[TagName] =
@@ -65,12 +65,16 @@ class XmlWriterMacroVisitor extends TypeTreeVisitor {
         )
 
     val isXmlContent: Boolean = annotations.exists[annotation.xmlContent]
-    val shouldTag: Boolean = !context.hasTag && !isXmlContent
-
     val additionalTag = annotations.getString[annotation.xmlAdditionalTag](parameter = "name")
     if !context.hasTag then additionalTag.foreach(tag => context.builder.appendElementStart(TagName(tag)))
 
-    context.copy(tagNameCandidate = tagNameCandidate2, hasTag = !shouldTag)
+    (
+      context.copy(tagNameCandidate = tagNameCandidate2, hasTag = context.hasTag || isXmlContent),
+      annotations
+        .remove[annotation.xmlContent]
+        .remove[annotation.xmlTag]
+        .remove[annotation.xmlAdditionalTag]
+    )
   }
 
   /** After visiting a node in the type tree. */
