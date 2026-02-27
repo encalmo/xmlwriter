@@ -175,7 +175,7 @@ The example above produces the following code after macro expansion:
 | `@xmlContent`         | Marks target as the content (text value) of the XML element instead of a tag or attribute.           |
 | `@xmlTag`             | Sets a custom XML tag or attribute name for this target (overrides the target name in serialization).   |
 | `@xmlAdditionalTag` | Annotation to wrap value in and additional XML element |
-| `@xmlTagLabelAndType` | Annotation to mandate nested tag elements: <label><type> ... </type></label> |
+| `@xmlTagLabelAndType` | Annotation to mandate nested tag elements for a field: &lt;field&gt;&lt;type&gt; ... &lt;/type&gt;&lt;/field&gt; |
 | `@xmlItemTag`         | Annotation to define the name of the XML element wrapping each item in an array or collection. This will override custom names of the items in the collection.                              |
 | `@xmlAdditionalItemTag`         | Annotation to define the name of the XML element additionally wrapping each item in an array or collection. This will NOT override custom names of the items in the collection.                              |
 | `@xmlNoItemTags`      | Prevents wrapping each collection element in an extra XML tag; all items are added directly.          |
