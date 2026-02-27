@@ -242,7 +242,7 @@ println(xml)
 ## Dependencies
 
    - [Scala](https://www.scala-lang.org) >= 3.7.4
-   - org.encalmo [**macro-utils** 0.10.5](https://central.sonatype.com/artifact/org.encalmo/macro-utils_3)
+   - org.encalmo [**macro-utils** 0.10.7](https://central.sonatype.com/artifact/org.encalmo/macro-utils_3)
 
 ## Usage
 
