@@ -10,7 +10,7 @@ import scala.quoted.*
 /** Function to visit a structure (tree) of some Scala type and value. */
 type VisitNodeFunction = (cache: StatementsCache, visitor: TypeTreeVisitor) ?=> (
     tpe: cache.quotes.reflect.TypeRepr,
-    value: cache.quotes.reflect.Term,
+    valueTerm: cache.quotes.reflect.Term,
     annotations: Set[AnnotationInfo],
     isCollectionItem: Boolean,
     context: visitor.Context
@@ -28,14 +28,14 @@ object TypeTreeIterator {
     (cache: StatementsCache, visitor: TypeTreeVisitor) ?=>
       (
           tpe: cache.quotes.reflect.TypeRepr,
-          value: cache.quotes.reflect.Term,
+          valueTerm: cache.quotes.reflect.Term,
           annotations: Set[AnnotationInfo],
           isCollectionItem: Boolean,
           context: visitor.Context
       ) =>
         visitNode(using cache, visitor)(
           tpe = tpe,
-          value = value,
+          valueTerm = valueTerm,
           context = context,
           isCollectionItem = isCollectionItem,
           annotations = annotations,
@@ -50,7 +50,7 @@ object TypeTreeIterator {
       visitor: TypeTreeVisitor
   )(
       tpe: cache.quotes.reflect.TypeRepr,
-      value: cache.quotes.reflect.Term,
+      valueTerm: cache.quotes.reflect.Term,
       context: visitor.Context,
       isCollectionItem: Boolean,
       annotations: Set[AnnotationInfo],
@@ -62,7 +62,7 @@ object TypeTreeIterator {
     import cache.quotes.reflect.*
 
     val typeAnnotations = AnnotationUtils.annotationsOf(tpe)
-    val valueAnnotations = getValueAnnotations(value)
+    val valueAnnotations = getValueAnnotations(valueTerm)
     val allAnnotations = typeAnnotations ++ valueAnnotations ++ annotations
 
     val context2 = visitor.beforeNode(allAnnotations, context)
@@ -83,7 +83,7 @@ object TypeTreeIterator {
         case TypeUtils.TypeReprIsPrimitiveOrStringOrBigDecimal() =>
           visitAsString(
             tpe = tpe,
-            value = value,
+            valueTerm = valueTerm,
             context = context2,
             isCollectionItem = isCollectionItem,
             trace = trace,
@@ -93,7 +93,7 @@ object TypeTreeIterator {
         case tpe if tpe.dealias =:= TypeRepr.of[BigInt] || tpe.dealias =:= TypeRepr.of[java.math.BigInteger] =>
           visitAsString(
             tpe = tpe,
-            value = value.methodCall("toString", List(Literal(IntConstant(10)))).toTerm,
+            valueTerm = valueTerm.methodCall("toString", List(Literal(IntConstant(10)))).toTerm,
             context = context2,
             isCollectionItem = isCollectionItem,
             trace = trace,
@@ -103,7 +103,7 @@ object TypeTreeIterator {
         case NamedTupleUtils.TypeReprIsNamedTuple() =>
           visitNamedTuple(
             tpe = tpe,
-            value = value,
+            valueTerm = valueTerm,
             context = context2,
             isCollectionItem = isCollectionItem,
             trace = trace,
@@ -114,7 +114,7 @@ object TypeTreeIterator {
         case TupleUtils.TypeReprIsTuple() =>
           visitTuple(
             tpe = tpe,
-            value = value,
+            valueTerm = valueTerm,
             context = context2,
             isCollectionItem = isCollectionItem,
             trace = trace,
@@ -126,7 +126,7 @@ object TypeTreeIterator {
         case OptionUtils.TypeReprIsOption(tpe) =>
           visitOption(
             tpe = tpe,
-            value = value,
+            valueTerm = valueTerm,
             context = context2,
             isCollectionItem = isCollectionItem,
             trace = trace,
@@ -139,7 +139,7 @@ object TypeTreeIterator {
             tpe = tpe,
             leftTpe = leftTpe,
             rightTpe = rightTpe,
-            value = value,
+            valueTerm = valueTerm,
             context = context2,
             isCollectionItem = isCollectionItem,
             trace = trace,
@@ -150,7 +150,7 @@ object TypeTreeIterator {
         case MapUtils.TypeReprIsMap(keyTpe, valueTpe) =>
           visitMap(
             tpe = tpe,
-            value = value,
+            valueTerm = valueTerm,
             keyTpe = keyTpe,
             valueTpe = valueTpe,
             context = context2,
@@ -163,7 +163,7 @@ object TypeTreeIterator {
         case IterableUtils.TypeReprIsIterable(itemTpe) =>
           visitCollection(
             tpe = tpe,
-            value = value,
+            valueTerm = valueTerm,
             itemTpe = itemTpe,
             context = context2,
             isCollectionItem = isCollectionItem,
@@ -175,7 +175,7 @@ object TypeTreeIterator {
         case ArrayUtils.TypeReprIsArray(itemTpe) =>
           visitArray(
             tpe = tpe,
-            value = value,
+            valueTerm = valueTerm,
             itemTpe = itemTpe,
             context = context2,
             isCollectionItem = isCollectionItem,
@@ -187,7 +187,7 @@ object TypeTreeIterator {
         case CaseClassUtils.TypeReprIsCaseClass() => {
           visitCaseClass(
             tpe = tpe,
-            value = value,
+            valueTerm = valueTerm,
             context = context2,
             isCollectionItem = isCollectionItem,
             trace = trace,
@@ -199,7 +199,7 @@ object TypeTreeIterator {
         case EnumUtils.TypeReprIsEnum() =>
           visitEnum(
             tpe = tpe,
-            value = value,
+            valueTerm = valueTerm,
             context = context2,
             isCollectionItem = isCollectionItem,
             trace = trace,
@@ -210,7 +210,7 @@ object TypeTreeIterator {
         case UnionUtils.TypeReprIsUnion(_) =>
           visitUnion(
             tpe = tpe,
-            value = value,
+            valueTerm = valueTerm,
             context = context2,
             isCollectionItem = isCollectionItem,
             trace = trace,
@@ -222,7 +222,7 @@ object TypeTreeIterator {
           visitSelectable(
             tpe = tpe,
             fields = fields,
-            value = value,
+            valueTerm = valueTerm,
             context = context2,
             isCollectionItem = isCollectionItem,
             trace = trace,
@@ -234,7 +234,7 @@ object TypeTreeIterator {
           visitOpaqueType(
             tpe = tpe,
             upperBoundTpe = upperBoundTpe,
-            value = value,
+            valueTerm = valueTerm,
             context = context2,
             isCollectionItem = isCollectionItem,
             trace = trace,
@@ -245,7 +245,7 @@ object TypeTreeIterator {
         case JavaRecordUtils.TypeReprIsJavaRecord() =>
           visitJavaRecord(
             tpe = tpe,
-            value = value,
+            valueTerm = valueTerm,
             context = context2,
             isCollectionItem = isCollectionItem,
             trace = trace,
@@ -258,7 +258,7 @@ object TypeTreeIterator {
             tpe = tpe,
             keyTpe = keyTpe,
             valueTpe = valueTpe,
-            value = value,
+            valueTerm = valueTerm,
             context = context2,
             isCollectionItem = isCollectionItem,
             trace = trace,
@@ -270,7 +270,7 @@ object TypeTreeIterator {
           visitJavaIterable(
             tpe = tpe,
             itemTpe = itemTpe,
-            value = value,
+            valueTerm = valueTerm,
             context = context2,
             isCollectionItem = isCollectionItem,
             trace = trace,
@@ -282,7 +282,7 @@ object TypeTreeIterator {
           // default to the string representation of the value
           visitAsString(
             tpe = tpe,
-            value = value.methodCall("toString", List()).toTerm,
+            valueTerm = valueTerm.methodCall("toString", List()).toTerm,
             context = context2,
             isCollectionItem = isCollectionItem,
             trace = trace,
@@ -295,7 +295,7 @@ object TypeTreeIterator {
       visitor
         .maybeProcessNodeDirectly(
           tpe = tpe,
-          value = value,
+          valueTerm = valueTerm,
           annotations = allAnnotations,
           isCollectionItem = isCollectionItem,
           context = context2,
@@ -309,7 +309,7 @@ object TypeTreeIterator {
     if (summonTypeclassInstance)
     then
       visitor
-        .maybeSummonTypeclassInstance(tpe, value, context2)
+        .maybeSummonTypeclassInstance(tpe, valueTerm, context2)
         .getOrElse(maybeProcessNodeDirectly)
     else maybeProcessNodeDirectly
 
@@ -321,14 +321,14 @@ object TypeTreeIterator {
       visitor: TypeTreeVisitor
   )(
       tpe: cache.quotes.reflect.TypeRepr,
-      value: cache.quotes.reflect.Term,
+      valueTerm: cache.quotes.reflect.Term,
       context: visitor.Context,
       isCollectionItem: Boolean,
       trace: scala.collection.mutable.Buffer[String],
       debugIndent: Int
   ): Unit = {
     debug(trace, debugIndent, tpe, "visitAsString")
-    visitor.visitAsString(tpe, value, context)
+    visitor.visitAsString(tpe, valueTerm, context)
   }
 
   def visitCaseClass(using
@@ -336,7 +336,7 @@ object TypeTreeIterator {
       visitor: TypeTreeVisitor
   )(
       tpe: cache.quotes.reflect.TypeRepr,
-      value: cache.quotes.reflect.Term,
+      valueTerm: cache.quotes.reflect.Term,
       isCollectionItem: Boolean,
       trace: scala.collection.mutable.Buffer[String],
       annotations: Set[AnnotationInfo],
@@ -347,13 +347,13 @@ object TypeTreeIterator {
     import cache.quotes.reflect.*
     debug(trace, debugIndent, tpe, "visitCaseClass")
 
-    val context2 = visitor.beforeCaseClass(tpe, value, annotations, context)
+    val context2 = visitor.beforeCaseClass(tpe, valueTerm, annotations, context)
 
     cache.putMethodCallOf[Unit](
       createMethodName("CaseClass", tpe, annotations),
       List(valueNameOf(tpe)),
       List(tpe),
-      List(value),
+      List(valueTerm),
       (nested: StatementsCache) ?=>
         (arguments: List[Tree]) =>
           given nested.quotes.type = nested.quotes
@@ -362,12 +362,12 @@ object TypeTreeIterator {
           CaseClassUtils.visit(
             tpe = tpe.toTypeRepr,
             valueTerm = entity,
-            functionOnField = { (tpe, name, value, annotations) =>
+            functionOnField = { (tpe, name, valueTerm, annotations) =>
               visitor
                 .visitCaseClassField(
                   tpe = tpe,
                   name = name,
-                  value = value,
+                  valueTerm = valueTerm,
                   annotations = annotations,
                   context = context2,
                   visitNode = visitNodeFunction(trace, debugIndent + 1)
@@ -386,7 +386,7 @@ object TypeTreeIterator {
       visitor: TypeTreeVisitor
   )(
       tpe: outer.quotes.reflect.TypeRepr,
-      value: outer.quotes.reflect.Term,
+      valueTerm: outer.quotes.reflect.Term,
       context: visitor.Context,
       isCollectionItem: Boolean,
       trace: scala.collection.mutable.Buffer[String],
@@ -397,13 +397,13 @@ object TypeTreeIterator {
     given outer.quotes.type = outer.quotes
     import outer.quotes.reflect.*
 
-    val context2 = visitor.beforeEnum(tpe, value, annotations, context)
+    val context2 = visitor.beforeEnum(tpe, valueTerm, annotations, context)
 
     outer.putMethodCallOf[Unit](
       createMethodName("Enum", tpe, annotations),
       List(valueNameOf(tpe)),
       List(tpe),
-      List(value),
+      List(valueTerm),
       (cache: StatementsCache) ?=>
         (arguments: List[Tree]) =>
           given cache.quotes.type = cache.quotes
@@ -413,12 +413,12 @@ object TypeTreeIterator {
             EnumUtils.transformToMatchTerm(
               tpe.toTypeRepr,
               valueTerm = entity,
-              functionWhenCaseValue = { (tpe, name, value, annotations) =>
+              functionWhenCaseValue = { (tpe, name, valueTerm, annotations) =>
                 block {
                   visitor.visitEnumCaseValue(
                     tpe = tpe.toTypeRepr,
                     name = name,
-                    value = value.toTerm,
+                    valueTerm = valueTerm.toTerm,
                     annotations = annotations ++ annotations,
                     isCollectionItem = isCollectionItem,
                     context = context2,
@@ -426,12 +426,12 @@ object TypeTreeIterator {
                   )
                 }
               },
-              functionWhenCaseClass = { (tpe, name, value, annotations) =>
+              functionWhenCaseClass = { (tpe, name, valueTerm, annotations) =>
                 block {
                   visitor.visitEnumCaseClass(
                     tpe = tpe.toTypeRepr,
                     name = name,
-                    value = value.toTerm,
+                    valueTerm = valueTerm.toTerm,
                     annotations = annotations ++ annotations,
                     isCollectionItem = isCollectionItem,
                     context = context2,
@@ -453,7 +453,7 @@ object TypeTreeIterator {
       visitor: TypeTreeVisitor
   )(
       tpe: outer.quotes.reflect.TypeRepr,
-      value: outer.quotes.reflect.Term,
+      valueTerm: outer.quotes.reflect.Term,
       context: visitor.Context,
       isCollectionItem: Boolean,
       trace: scala.collection.mutable.Buffer[String],
@@ -464,12 +464,12 @@ object TypeTreeIterator {
     given outer.quotes.type = outer.quotes
     import outer.quotes.reflect.*
 
-    val context2 = visitor.beforeUnion(tpe, value, annotations, context)
+    val context2 = visitor.beforeUnion(tpe, valueTerm, annotations, context)
     outer.putMethodCallOf[Unit](
       createMethodName("Union", tpe, annotations),
       List(valueNameOf(tpe)),
       List(tpe),
-      List(value),
+      List(valueTerm),
       (cache: StatementsCache) ?=>
         (arguments: List[Tree]) => {
           val entity = cache.quotes.reflect
@@ -479,11 +479,11 @@ object TypeTreeIterator {
             UnionUtils.transformToMatchTerm(
               tpe.toTypeRepr,
               entity,
-              { (tpe, value) =>
+              { (tpe, valueTerm) =>
                 block(
                   visitor.visitUnionMember(
                     tpe = tpe.toTypeRepr,
-                    value = value.toTerm,
+                    valueTerm = valueTerm.toTerm,
                     annotations = AnnotationUtils.annotationsOf(tpe.toTypeRepr) ++ annotations,
                     isCollectionItem = isCollectionItem,
                     context = context2,
@@ -504,7 +504,7 @@ object TypeTreeIterator {
       visitor: TypeTreeVisitor
   )(
       tpe: cache.quotes.reflect.TypeRepr,
-      value: cache.quotes.reflect.Term,
+      valueTerm: cache.quotes.reflect.Term,
       context: visitor.Context,
       isCollectionItem: Boolean,
       trace: scala.collection.mutable.Buffer[String],
@@ -517,12 +517,12 @@ object TypeTreeIterator {
     cache.put(
       OptionUtils.buildMatchTerm(
         tpe.toTypeRepr,
-        target = value,
-        functionOnSome = { (tpe, value) =>
+        target = valueTerm,
+        functionOnSome = { (tpe, valueTerm) =>
           block {
             visitor.visitOptionSome(
               tpe = tpe.toTypeRepr,
-              value = value.toTerm,
+              valueTerm = valueTerm.toTerm,
               annotations = annotations,
               isCollectionItem = isCollectionItem,
               context = context,
@@ -551,7 +551,7 @@ object TypeTreeIterator {
       tpe: cache.quotes.reflect.TypeRepr,
       leftTpe: cache.quotes.reflect.TypeRepr,
       rightTpe: cache.quotes.reflect.TypeRepr,
-      value: cache.quotes.reflect.Term,
+      valueTerm: cache.quotes.reflect.Term,
       context: visitor.Context,
       isCollectionItem: Boolean,
       trace: scala.collection.mutable.Buffer[String],
@@ -565,12 +565,12 @@ object TypeTreeIterator {
       EitherUtils.buildMatchTerm(
         leftTpe.toTypeRepr,
         rightTpe.toTypeRepr,
-        target = value,
-        functionOnLeft = { (tpe, value) =>
+        target = valueTerm,
+        functionOnLeft = { (tpe, valueTerm) =>
           block(
             visitor.visitEitherLeft(
               tpe = tpe.toTypeRepr,
-              value = value.toTerm,
+              valueTerm = valueTerm.toTerm,
               annotations = annotations,
               isCollectionItem = isCollectionItem,
               context = context,
@@ -579,11 +579,11 @@ object TypeTreeIterator {
           )
 
         },
-        functionOnRight = { (tpe, value) =>
+        functionOnRight = { (tpe, valueTerm) =>
           block(
             visitor.visitEitherRight(
               tpe = tpe.toTypeRepr,
-              value = value.toTerm,
+              valueTerm = valueTerm.toTerm,
               annotations = annotations,
               isCollectionItem = isCollectionItem,
               context = context,
@@ -601,7 +601,7 @@ object TypeTreeIterator {
   )(
       tpe: cache.quotes.reflect.TypeRepr,
       itemTpe: cache.quotes.reflect.TypeRepr,
-      value: cache.quotes.reflect.Term,
+      valueTerm: cache.quotes.reflect.Term,
       context: visitor.Context,
       isCollectionItem: Boolean,
       trace: scala.collection.mutable.Buffer[String],
@@ -609,17 +609,17 @@ object TypeTreeIterator {
       debugIndent: Int
   ): Unit = {
     debug(trace, debugIndent, tpe, "visitCollection")
-    val context2 = visitor.beforeCollection(tpe, itemTpe, value, annotations, context)
+    val context2 = visitor.beforeCollection(tpe, itemTpe, valueTerm, annotations, context)
     cache.put(
       IterableUtils.buildIterableLoop(
         visitor.createVariableNamePrefix(context),
         itemTpe.toTypeRepr,
-        value,
-        functionOnItem = { (tpe, value) =>
+        valueTerm,
+        functionOnItem = { (tpe, valueTerm) =>
           block {
             visitor.visitCollectionItem(
               tpe = tpe.toTypeRepr,
-              value = value.toTerm,
+              valueTerm = valueTerm.toTerm,
               annotations = annotations,
               context = context2,
               visitNode = visitNodeFunction(trace, debugIndent + 1)
@@ -637,7 +637,7 @@ object TypeTreeIterator {
   )(
       tpe: cache.quotes.reflect.TypeRepr,
       itemTpe: cache.quotes.reflect.TypeRepr,
-      value: cache.quotes.reflect.Term,
+      valueTerm: cache.quotes.reflect.Term,
       context: visitor.Context,
       isCollectionItem: Boolean,
       trace: scala.collection.mutable.Buffer[String],
@@ -647,17 +647,17 @@ object TypeTreeIterator {
     debug(trace, debugIndent, tpe, "visitArray")
     given cache.quotes.type = cache.quotes
 
-    val context2 = visitor.beforeArray(tpe, itemTpe, value, annotations, context)
+    val context2 = visitor.beforeArray(tpe, itemTpe, valueTerm, annotations, context)
     cache.put(
       ArrayUtils.buildArrayLoop(
         visitor.createVariableNamePrefix(context),
         itemTpe.toTypeRepr,
-        value.toTerm,
-        functionOnItem = { (tpe, value) =>
+        valueTerm.toTerm,
+        functionOnItem = { (tpe, valueTerm) =>
           block {
             visitor.visitArrayItem(
               tpe = tpe.toTypeRepr,
-              value = value.toTerm,
+              valueTerm = valueTerm.toTerm,
               annotations = annotations,
               context = context2,
               visitNode = visitNodeFunction(trace, debugIndent + 1)
@@ -676,7 +676,7 @@ object TypeTreeIterator {
       tpe: cache.quotes.reflect.TypeRepr,
       keyTpe: cache.quotes.reflect.TypeRepr,
       valueTpe: cache.quotes.reflect.TypeRepr,
-      value: cache.quotes.reflect.Term,
+      valueTerm: cache.quotes.reflect.Term,
       context: visitor.Context,
       isCollectionItem: Boolean,
       trace: scala.collection.mutable.Buffer[String],
@@ -686,19 +686,19 @@ object TypeTreeIterator {
     debug(trace, debugIndent, tpe, "visitMap")
     given cache.quotes.type = cache.quotes
 
-    val context2 = visitor.beforeMap(tpe, keyTpe, valueTpe, value, annotations, context)
+    val context2 = visitor.beforeMap(tpe, keyTpe, valueTpe, valueTerm, annotations, context)
     cache.put(
       MapUtils.buildMapLoop(
         visitor.createVariableNamePrefix(context),
         keyTpe.toTypeRepr,
         valueTpe.toTypeRepr,
-        value,
-        functionOnEntry = { (key, value) =>
+        valueTerm,
+        functionOnEntry = { (keyTerm, valueTerm) =>
           block {
             visitor.visitMapEntry(
               tpe = valueTpe.toTypeRepr,
-              key = key.toTerm,
-              value = value.toTerm,
+              keyTerm = keyTerm.toTerm,
+              valueTerm = valueTerm.toTerm,
               annotations = annotations,
               context = context2,
               visitNode = visitNodeFunction(trace, debugIndent + 1)
@@ -716,7 +716,7 @@ object TypeTreeIterator {
   )(
       tpe: cache.quotes.reflect.TypeRepr,
       itemTpe: cache.quotes.reflect.TypeRepr,
-      value: cache.quotes.reflect.Term,
+      valueTerm: cache.quotes.reflect.Term,
       context: visitor.Context,
       isCollectionItem: Boolean,
       trace: scala.collection.mutable.Buffer[String],
@@ -725,17 +725,17 @@ object TypeTreeIterator {
   ): Unit = {
     debug(trace, debugIndent, tpe, "visitJavaIterable")
     given cache.quotes.type = cache.quotes
-    val context2 = visitor.beforeJavaIterable(tpe, itemTpe, value, annotations, context)
+    val context2 = visitor.beforeJavaIterable(tpe, itemTpe, valueTerm, annotations, context)
     cache.put(
       JavaIterableUtils.buildIterableLoop(
         visitor.createVariableNamePrefix(context),
         itemTpe.toTypeRepr,
-        value,
-        functionOnItem = { (tpe, value) =>
+        valueTerm,
+        functionOnItem = { (tpe, valueTerm) =>
           block {
             visitor.visitJavaIterableItem(
               tpe = tpe.toTypeRepr,
-              value = value.toTerm,
+              valueTerm = valueTerm.toTerm,
               annotations = annotations,
               context = context2,
               visitNode = visitNodeFunction(trace, debugIndent + 1)
@@ -754,7 +754,7 @@ object TypeTreeIterator {
       tpe: cache.quotes.reflect.TypeRepr,
       keyTpe: cache.quotes.reflect.TypeRepr,
       valueTpe: cache.quotes.reflect.TypeRepr,
-      value: cache.quotes.reflect.Term,
+      valueTerm: cache.quotes.reflect.Term,
       context: visitor.Context,
       isCollectionItem: Boolean,
       trace: scala.collection.mutable.Buffer[String],
@@ -764,19 +764,19 @@ object TypeTreeIterator {
     debug(trace, debugIndent, tpe, "visitJavaMap")
     given cache.quotes.type = cache.quotes
 
-    val context2 = visitor.beforeJavaMap(tpe, keyTpe, valueTpe, value, annotations, context)
+    val context2 = visitor.beforeJavaMap(tpe, keyTpe, valueTpe, valueTerm, annotations, context)
     cache.put(
       JavaMapUtils.buildMapLoop(
         visitor.createVariableNamePrefix(context),
         keyTpe.toTypeRepr,
         valueTpe.toTypeRepr,
-        value,
-        functionOnEntry = { (key, value) =>
+        valueTerm,
+        functionOnEntry = { (keyTerm, valueTerm) =>
           block {
             visitor.visitJavaMapEntry(
               tpe = valueTpe.toTypeRepr,
-              key = key.toTerm,
-              value = value.toTerm,
+              keyTerm = keyTerm.toTerm,
+              valueTerm = valueTerm.toTerm,
               annotations = annotations,
               context = context2,
               visitNode = visitNodeFunction(trace, debugIndent + 1)
@@ -794,7 +794,7 @@ object TypeTreeIterator {
       visitor: TypeTreeVisitor
   )(
       tpe: cache.quotes.reflect.TypeRepr,
-      value: cache.quotes.reflect.Term,
+      valueTerm: cache.quotes.reflect.Term,
       context: visitor.Context,
       isCollectionItem: Boolean,
       trace: scala.collection.mutable.Buffer[String],
@@ -803,14 +803,14 @@ object TypeTreeIterator {
   ): Unit = {
     debug(trace, debugIndent, tpe, "visitTuple")
 
-    val context2 = visitor.beforeTuple(tpe, value, annotations, context)
+    val context2 = visitor.beforeTuple(tpe, valueTerm, annotations, context)
     TupleUtils.visit(
       tpe.toTypeRepr,
-      valueTerm = value,
-      functionOnItem = { (tpe, value, index) =>
+      valueTerm = valueTerm,
+      functionOnItem = { (tpe, valueTerm, index) =>
         visitor.visitTupleItem(
           tpe = tpe.toTypeRepr,
-          value = value,
+          valueTerm = valueTerm,
           annotations = annotations,
           context = context2,
           visitNode = visitNodeFunction(trace, debugIndent + 1)
@@ -826,7 +826,7 @@ object TypeTreeIterator {
       visitor: TypeTreeVisitor
   )(
       tpe: cache.quotes.reflect.TypeRepr,
-      value: cache.quotes.reflect.Term,
+      valueTerm: cache.quotes.reflect.Term,
       context: visitor.Context,
       isCollectionItem: Boolean,
       trace: scala.collection.mutable.Buffer[String],
@@ -835,16 +835,16 @@ object TypeTreeIterator {
   ): Unit = {
     debug(trace, debugIndent, tpe, "visitNamedTuple")
 
-    val context2 = visitor.beforeNamedTuple(tpe, value, annotations, context)
+    val context2 = visitor.beforeNamedTuple(tpe, valueTerm, annotations, context)
     NamedTupleUtils.visit(
       label = None,
       tpe.toTypeRepr,
-      valueTerm = value,
-      functionOnField = { (tpe, name, value, index) =>
+      valueTerm = valueTerm,
+      functionOnField = { (tpe, name, valueTerm, index) =>
         visitor.visitNamedTupleItem(
           tpe = tpe.toTypeRepr,
           name = name,
-          value = value,
+          valueTerm = valueTerm,
           annotations = annotations,
           context = context2,
           visitNode = visitNodeFunction(trace, debugIndent + 1)
@@ -861,7 +861,7 @@ object TypeTreeIterator {
   )(
       tpe: cache.quotes.reflect.TypeRepr,
       fields: cache.quotes.reflect.TypeRepr,
-      value: cache.quotes.reflect.Term,
+      valueTerm: cache.quotes.reflect.Term,
       context: visitor.Context,
       isCollectionItem: Boolean,
       trace: scala.collection.mutable.Buffer[String],
@@ -872,12 +872,12 @@ object TypeTreeIterator {
     given cache.quotes.type = cache.quotes
     import cache.quotes.reflect.*
 
-    val context2 = visitor.beforeSelectable(tpe, fields, value, annotations, context)
+    val context2 = visitor.beforeSelectable(tpe, fields, valueTerm, annotations, context)
     cache.putMethodCallOf[Unit](
       createMethodName("Selectable", tpe, annotations),
       List(valueNameOf(tpe)),
       List(tpe),
-      List(value),
+      List(valueTerm),
       (nested: StatementsCache) ?=>
         (arguments: List[Tree]) =>
           given nested.quotes.type = nested.quotes
@@ -887,11 +887,11 @@ object TypeTreeIterator {
           SelectableUtils.visitFields(
             fieldsTpe = fields.toTypeRepr,
             valueTerm = entity.toTerm,
-            functionOnField = { (tpe, name, value) =>
+            functionOnField = { (tpe, name, valueTerm) =>
               visitor.visitSelectableField(
                 tpe = tpe.toTypeRepr,
                 name = name,
-                value = value.toTerm,
+                valueTerm = valueTerm.toTerm,
                 annotations = annotations,
                 context = context2,
                 visitNode = visitNodeFunction(trace, debugIndent + 1)
@@ -909,7 +909,7 @@ object TypeTreeIterator {
       visitor: TypeTreeVisitor
   )(
       tpe: cache.quotes.reflect.TypeRepr,
-      value: cache.quotes.reflect.Term,
+      valueTerm: cache.quotes.reflect.Term,
       context: visitor.Context,
       isCollectionItem: Boolean,
       trace: scala.collection.mutable.Buffer[String],
@@ -920,12 +920,12 @@ object TypeTreeIterator {
     import cache.quotes.reflect.*
     debug(trace, debugIndent, tpe, "visitJavaRecord")
 
-    val context2 = visitor.beforeJavaRecord(tpe, value, annotations, context)
+    val context2 = visitor.beforeJavaRecord(tpe, valueTerm, annotations, context)
     cache.putMethodCallOf[Unit](
       createMethodName("Record", tpe, annotations),
       List(valueNameOf(tpe)),
       List(tpe),
-      List(value),
+      List(valueTerm),
       (nested: StatementsCache) ?=>
         (arguments: List[Tree]) =>
           given nested.quotes.type = nested.quotes
@@ -935,11 +935,11 @@ object TypeTreeIterator {
           JavaRecordUtils.visit(
             tpe = tpe.toTypeRepr,
             valueTerm = entity,
-            functionOnField = { (tpe, name, value) =>
+            functionOnField = { (tpe, name, valueTerm) =>
               visitor.visitJavaRecordField(
                 tpe = tpe,
                 name = name,
-                value = value,
+                valueTerm = valueTerm,
                 annotations = annotations,
                 context = context2,
                 visitNode = visitNodeFunction(trace, debugIndent + 1)
@@ -961,7 +961,7 @@ object TypeTreeIterator {
   )(
       tpe: cache.quotes.reflect.TypeRepr,
       upperBoundTpe: Option[cache.quotes.reflect.TypeRepr],
-      value: cache.quotes.reflect.Term,
+      valueTerm: cache.quotes.reflect.Term,
       context: visitor.Context,
       isCollectionItem: Boolean,
       trace: scala.collection.mutable.Buffer[String],
@@ -974,7 +974,7 @@ object TypeTreeIterator {
     visitor.visitOpaqueType(
       tpe = tpe,
       upperBoundTpe = upperBoundTpe,
-      value = value,
+      valueTerm = valueTerm,
       annotations = annotations,
       isCollectionItem = isCollectionItem,
       context = context,

@@ -58,7 +58,7 @@ class XmlWriterMacroVisitor extends TypeTreeVisitor {
       cache: StatementsCache
   )(
       tpe: cache.quotes.reflect.TypeRepr,
-      value: cache.quotes.reflect.Term,
+      valueTerm: cache.quotes.reflect.Term,
       annotations: Set[AnnotationInfo],
       isCollectionItem: Boolean,
       context: XmlWriterMacroContext,
@@ -74,10 +74,10 @@ class XmlWriterMacroVisitor extends TypeTreeVisitor {
       .getString[annotation.xmlValueSelector](parameter = "property")
 
     maybeTagValue
-      .map { value =>
+      .map { valueTerm =>
         // debug(trace, debugIndent, tpe, "writeXmlValue")
         if !context.hasTag then context.builder.appendElementStart(context.tagName)
-        context.builder.appendText(Literal(StringConstant(value)))
+        context.builder.appendText(Literal(StringConstant(valueTerm)))
         if !context.hasTag then context.builder.appendElementEnd(context.tagName)
 
       }
@@ -87,12 +87,12 @@ class XmlWriterMacroVisitor extends TypeTreeVisitor {
             MethodUtils.maybeSelectTerm(
               selector = selector,
               tpe = tpe,
-              valueTerm = value,
-              functionWhenSelected = { (tpe, value) =>
+              valueTerm = valueTerm,
+              functionWhenSelected = { (tpe, valueTerm) =>
                 visitNode(using cache, this)(
                   tpe = tpe,
-                  value = value,
-                  context = context, // XmlWriterMacroContext(tagName = tagName,builder = builder,hasTag = hasTag),
+                  valueTerm = valueTerm,
+                  context = context,
                   annotations = annotations.remove[annotation.xmlValueSelector],
                   isCollectionItem = isCollectionItem
                 )
@@ -104,7 +104,7 @@ class XmlWriterMacroVisitor extends TypeTreeVisitor {
 
   override def maybeSummonTypeclassInstance(using
       cache: StatementsCache
-  )(tpe: cache.quotes.reflect.TypeRepr, value: cache.quotes.reflect.Term, context: Context): Option[Unit] = {
+  )(tpe: cache.quotes.reflect.TypeRepr, valueTerm: cache.quotes.reflect.Term, context: Context): Option[Unit] = {
     given cache.quotes.type = cache.quotes
     import cache.quotes.reflect.*
 
@@ -116,7 +116,7 @@ class XmlWriterMacroVisitor extends TypeTreeVisitor {
               "write",
               List(
                 context.tagName.resolve,
-                value,
+                valueTerm,
                 Literal(BooleanConstant(!context.hasTag))
               ),
               List(cache.getValueRef("builder"))
@@ -130,11 +130,11 @@ class XmlWriterMacroVisitor extends TypeTreeVisitor {
       cache: StatementsCache
   )(
       tpe: cache.quotes.reflect.TypeRepr,
-      value: cache.quotes.reflect.Term,
+      valueTerm: cache.quotes.reflect.Term,
       context: Context
   ): Unit = {
     if !context.hasTag then context.builder.appendElementStart(context.tagName)
-    context.builder.appendText(value)
+    context.builder.appendText(valueTerm)
     if !context.hasTag then context.builder.appendElementEnd(context.tagName)
   }
 
@@ -142,13 +142,13 @@ class XmlWriterMacroVisitor extends TypeTreeVisitor {
       cache: StatementsCache
   )(
       tpe: cache.quotes.reflect.TypeRepr,
-      value: cache.quotes.reflect.Term,
+      valueTerm: cache.quotes.reflect.Term,
       annotations: Set[AnnotationInfo],
       context: Context
   ): Context = {
     if !context.hasTag
     then {
-      val attributes: cache.quotes.reflect.Term = collectAttributesFromCaseClass(tpe, value)
+      val attributes: cache.quotes.reflect.Term = collectAttributesFromCaseClass(tpe, valueTerm)
       context.builder.appendElementStartWithAttributes(context.tagName, attributes)
     }
     context
@@ -158,15 +158,15 @@ class XmlWriterMacroVisitor extends TypeTreeVisitor {
       cache: StatementsCache
   )(
       tpe: cache.quotes.reflect.TypeRepr,
-      value: cache.quotes.reflect.Term
+      valueTerm: cache.quotes.reflect.Term
   ): cache.quotes.reflect.Term = {
     given cache.quotes.type = cache.quotes
     import cache.quotes.reflect.*
     val list = collection.mutable.ListBuffer.empty[cache.quotes.reflect.Term]
     CaseClassUtils.visit(
       tpe,
-      value,
-      { (tpe, name, value, annotations) =>
+      valueTerm,
+      { (tpe, name, valueTerm, annotations) =>
         {
           val isAttribute = annotations.exists[annotation.xmlAttribute]
           if isAttribute then {
@@ -177,7 +177,7 @@ class XmlWriterMacroVisitor extends TypeTreeVisitor {
             list.append(
               TupleUtils.createTuple2(
                 Literal(StringConstant(tagName2)),
-                StringUtils.applyToString(value)
+                StringUtils.applyToString(valueTerm)
               )
             )
           }
@@ -192,7 +192,7 @@ class XmlWriterMacroVisitor extends TypeTreeVisitor {
   )(
       tpe: cache.quotes.reflect.TypeRepr,
       name: String,
-      value: cache.quotes.reflect.Term,
+      valueTerm: cache.quotes.reflect.Term,
       annotations: Set[AnnotationInfo],
       context: Context,
       visitNode: VisitNodeFunction
@@ -204,7 +204,7 @@ class XmlWriterMacroVisitor extends TypeTreeVisitor {
     if !isAttribute then {
       visitNode(using cache, this)(
         tpe = tpe,
-        value = value,
+        valueTerm = valueTerm,
         context = context.copy(tagName = TagName(name), hasTag = false),
         isCollectionItem = false,
         annotations = AnnotationUtils.annotationsOf(tpe.toTypeRepr) ++ annotations
@@ -225,7 +225,7 @@ class XmlWriterMacroVisitor extends TypeTreeVisitor {
       cache: StatementsCache
   )(
       tpe: cache.quotes.reflect.TypeRepr,
-      value: cache.quotes.reflect.Term,
+      valueTerm: cache.quotes.reflect.Term,
       annotations: Set[AnnotationInfo],
       context: Context
   ): Context = {
@@ -237,7 +237,7 @@ class XmlWriterMacroVisitor extends TypeTreeVisitor {
   )(
       tpe: cache.quotes.reflect.TypeRepr,
       name: String,
-      value: cache.quotes.reflect.Term,
+      valueTerm: cache.quotes.reflect.Term,
       annotations: Set[AnnotationInfo],
       isCollectionItem: Boolean,
       context: Context,
@@ -248,7 +248,7 @@ class XmlWriterMacroVisitor extends TypeTreeVisitor {
     val customTagValue: Option[cache.quotes.reflect.Term] =
       annotations.getTerm[annotation.xmlValue](parameter = "value")
 
-    val tagValue = customTagValue.getOrElse(value)
+    val tagValue = customTagValue.getOrElse(valueTerm)
     if !context.hasTag
     then {
       context.builder.appendElementStart(context.tagName)
@@ -268,7 +268,7 @@ class XmlWriterMacroVisitor extends TypeTreeVisitor {
   )(
       tpe: cache.quotes.reflect.TypeRepr,
       name: String,
-      value: cache.quotes.reflect.Term,
+      valueTerm: cache.quotes.reflect.Term,
       annotations: Set[AnnotationInfo],
       isCollectionItem: Boolean,
       context: Context,
@@ -277,7 +277,7 @@ class XmlWriterMacroVisitor extends TypeTreeVisitor {
     if !context.hasTag then context.builder.appendElementStart(context.tagName)
     visitNode(using cache, this)(
       tpe = tpe,
-      value = value,
+      valueTerm = valueTerm,
       annotations = annotations,
       isCollectionItem = isCollectionItem,
       context = context.copy(tagName = TagName(name), hasTag = false)
@@ -296,7 +296,7 @@ class XmlWriterMacroVisitor extends TypeTreeVisitor {
       cache: StatementsCache
   )(
       tpe: cache.quotes.reflect.TypeRepr,
-      value: cache.quotes.reflect.Term,
+      valueTerm: cache.quotes.reflect.Term,
       annotations: Set[AnnotationInfo],
       isCollectionItem: Boolean,
       context: Context,
@@ -311,7 +311,7 @@ class XmlWriterMacroVisitor extends TypeTreeVisitor {
 
     visitNode(using cache, this)(
       tpe = tpe,
-      value = value,
+      valueTerm = valueTerm,
       annotations = annotations,
       isCollectionItem = isCollectionItem,
       context = context.copy(tagName = itemLabel)
@@ -331,7 +331,7 @@ class XmlWriterMacroVisitor extends TypeTreeVisitor {
       cache: StatementsCache
   )(
       tpe: cache.quotes.reflect.TypeRepr,
-      value: cache.quotes.reflect.Term,
+      valueTerm: cache.quotes.reflect.Term,
       annotations: Set[AnnotationInfo],
       isCollectionItem: Boolean,
       context: Context,
@@ -345,7 +345,7 @@ class XmlWriterMacroVisitor extends TypeTreeVisitor {
 
     visitNode(using cache, this)(
       tpe = tpe,
-      value = value,
+      valueTerm = valueTerm,
       annotations = annotations,
       isCollectionItem = isCollectionItem,
       context = context.copy(tagName = itemLabel)
@@ -356,7 +356,7 @@ class XmlWriterMacroVisitor extends TypeTreeVisitor {
       cache: StatementsCache
   )(
       tpe: cache.quotes.reflect.TypeRepr,
-      value: cache.quotes.reflect.Term,
+      valueTerm: cache.quotes.reflect.Term,
       annotations: Set[AnnotationInfo],
       isCollectionItem: Boolean,
       context: Context,
@@ -370,7 +370,7 @@ class XmlWriterMacroVisitor extends TypeTreeVisitor {
 
     visitNode(using cache, this)(
       tpe = tpe,
-      value = value,
+      valueTerm = valueTerm,
       annotations = annotations,
       isCollectionItem = isCollectionItem,
       context = context.copy(tagName = itemLabel)
@@ -382,7 +382,7 @@ class XmlWriterMacroVisitor extends TypeTreeVisitor {
   )(
       tpe: cache.quotes.reflect.TypeRepr,
       upperBoundTpe: Option[cache.quotes.reflect.TypeRepr],
-      value: cache.quotes.reflect.Term,
+      valueTerm: cache.quotes.reflect.Term,
       annotations: Set[AnnotationInfo],
       isCollectionItem: Boolean,
       context: Context,
@@ -393,7 +393,7 @@ class XmlWriterMacroVisitor extends TypeTreeVisitor {
       case Some(upperBoundTpe) =>
         visitNode(using cache, this)(
           tpe = upperBoundTpe,
-          value = value,
+          valueTerm = valueTerm,
           annotations = annotations,
           isCollectionItem = isCollectionItem,
           context = context
@@ -402,7 +402,7 @@ class XmlWriterMacroVisitor extends TypeTreeVisitor {
       case None =>
         visitAsString(
           tpe = tpe,
-          value = value.methodCall("toString", List()).toTerm,
+          valueTerm = valueTerm.methodCall("toString", List()).toTerm,
           context = context
         )
     }
@@ -413,7 +413,7 @@ class XmlWriterMacroVisitor extends TypeTreeVisitor {
   )(
       tpe: cache.quotes.reflect.TypeRepr,
       itemTpe: cache.quotes.reflect.TypeRepr,
-      value: cache.quotes.reflect.Term,
+      valueTerm: cache.quotes.reflect.Term,
       annotations: Set[AnnotationInfo],
       context: Context
   ): Context = {
@@ -429,7 +429,7 @@ class XmlWriterMacroVisitor extends TypeTreeVisitor {
       cache: StatementsCache
   )(
       tpe: cache.quotes.reflect.TypeRepr,
-      value: cache.quotes.reflect.Term,
+      valueTerm: cache.quotes.reflect.Term,
       annotations: Set[AnnotationInfo],
       context: Context,
       visitNode: VisitNodeFunction
@@ -443,7 +443,7 @@ class XmlWriterMacroVisitor extends TypeTreeVisitor {
 
     visitNode(using cache, this)(
       tpe = tpe,
-      value = value,
+      valueTerm = valueTerm,
       annotations = itemAnnotations,
       isCollectionItem = true,
       context = context
@@ -464,7 +464,7 @@ class XmlWriterMacroVisitor extends TypeTreeVisitor {
   )(
       tpe: cache.quotes.reflect.TypeRepr,
       itemTpe: cache.quotes.reflect.TypeRepr,
-      value: cache.quotes.reflect.Term,
+      valueTerm: cache.quotes.reflect.Term,
       annotations: Set[AnnotationInfo],
       context: Context
   ): Context = {
@@ -480,7 +480,7 @@ class XmlWriterMacroVisitor extends TypeTreeVisitor {
       cache: StatementsCache
   )(
       tpe: cache.quotes.reflect.TypeRepr,
-      value: cache.quotes.reflect.Term,
+      valueTerm: cache.quotes.reflect.Term,
       annotations: Set[AnnotationInfo],
       context: Context,
       visitNode: VisitNodeFunction
@@ -494,7 +494,7 @@ class XmlWriterMacroVisitor extends TypeTreeVisitor {
 
     visitNode(using cache, this)(
       tpe = tpe,
-      value = value,
+      valueTerm = valueTerm,
       annotations = itemAnnotations,
       isCollectionItem = true,
       context = context
@@ -514,7 +514,7 @@ class XmlWriterMacroVisitor extends TypeTreeVisitor {
       cache: StatementsCache
   )(
       tpe: cache.quotes.reflect.TypeRepr,
-      value: cache.quotes.reflect.Term,
+      valueTerm: cache.quotes.reflect.Term,
       annotations: Set[AnnotationInfo],
       context: Context
   ): Context = {
@@ -530,7 +530,7 @@ class XmlWriterMacroVisitor extends TypeTreeVisitor {
       cache: StatementsCache
   )(
       tpe: cache.quotes.reflect.TypeRepr,
-      value: cache.quotes.reflect.Term,
+      valueTerm: cache.quotes.reflect.Term,
       annotations: Set[AnnotationInfo],
       context: Context,
       visitNode: VisitNodeFunction
@@ -539,7 +539,7 @@ class XmlWriterMacroVisitor extends TypeTreeVisitor {
     val itemTag: Option[String] = annotations.getString[annotation.xmlItemTag](parameter = "name")
     visitNode(using cache, this)(
       tpe = tpe,
-      value = value,
+      valueTerm = valueTerm,
       annotations = Set.empty,
       isCollectionItem = true,
       context = context.copy(tagName = itemTag.getOrElse(TypeNameUtils.typeNameOf(tpe)))
@@ -559,7 +559,7 @@ class XmlWriterMacroVisitor extends TypeTreeVisitor {
       cache: StatementsCache
   )(
       tpe: cache.quotes.reflect.TypeRepr,
-      value: cache.quotes.reflect.Term,
+      valueTerm: cache.quotes.reflect.Term,
       annotations: Set[AnnotationInfo],
       context: Context
   ): Context = {
@@ -576,7 +576,7 @@ class XmlWriterMacroVisitor extends TypeTreeVisitor {
   )(
       tpe: cache.quotes.reflect.TypeRepr,
       name: String,
-      value: cache.quotes.reflect.Term,
+      valueTerm: cache.quotes.reflect.Term,
       annotations: Set[AnnotationInfo],
       context: Context,
       visitNode: VisitNodeFunction
@@ -584,7 +584,7 @@ class XmlWriterMacroVisitor extends TypeTreeVisitor {
     given cache.quotes.type = cache.quotes
     visitNode(using cache, this)(
       tpe = tpe,
-      value = value,
+      valueTerm = valueTerm,
       annotations = Set.empty,
       isCollectionItem = false,
       context = context.copy(tagName = name)
@@ -605,7 +605,7 @@ class XmlWriterMacroVisitor extends TypeTreeVisitor {
   )(
       tpe: cache.quotes.reflect.TypeRepr,
       fields: cache.quotes.reflect.TypeRepr,
-      value: cache.quotes.reflect.Term,
+      valueTerm: cache.quotes.reflect.Term,
       annotations: Set[AnnotationInfo],
       context: Context
   ): Context = {
@@ -618,14 +618,14 @@ class XmlWriterMacroVisitor extends TypeTreeVisitor {
   )(
       tpe: cache.quotes.reflect.TypeRepr,
       name: String,
-      value: cache.quotes.reflect.Term,
+      valueTerm: cache.quotes.reflect.Term,
       annotations: Set[AnnotationInfo],
       context: Context,
       visitNode: VisitNodeFunction
   ): Unit = {
     visitNode(using cache, this)(
       tpe = tpe,
-      value = value,
+      valueTerm = valueTerm,
       annotations = annotations,
       isCollectionItem = false,
       context = context.copy(tagName = TagName(name))
@@ -645,7 +645,7 @@ class XmlWriterMacroVisitor extends TypeTreeVisitor {
       cache: StatementsCache
   )(
       tpe: cache.quotes.reflect.TypeRepr,
-      value: cache.quotes.reflect.Term,
+      valueTerm: cache.quotes.reflect.Term,
       annotations: Set[AnnotationInfo],
       context: Context
   ): Context = {
@@ -657,7 +657,7 @@ class XmlWriterMacroVisitor extends TypeTreeVisitor {
       cache: StatementsCache
   )(
       tpe: cache.quotes.reflect.TypeRepr,
-      value: cache.quotes.reflect.Term,
+      valueTerm: cache.quotes.reflect.Term,
       annotations: Set[AnnotationInfo],
       isCollectionItem: Boolean,
       context: Context,
@@ -665,7 +665,7 @@ class XmlWriterMacroVisitor extends TypeTreeVisitor {
   ): Unit = {
     visitNode(using cache, this)(
       tpe = tpe,
-      value = value,
+      valueTerm = valueTerm,
       annotations = annotations,
       isCollectionItem = isCollectionItem,
       context = context
@@ -686,7 +686,7 @@ class XmlWriterMacroVisitor extends TypeTreeVisitor {
   )(
       tpe: cache.quotes.reflect.TypeRepr,
       itemTpe: cache.quotes.reflect.TypeRepr,
-      value: cache.quotes.reflect.Term,
+      valueTerm: cache.quotes.reflect.Term,
       annotations: Set[AnnotationInfo],
       context: Context
   ): Context = {
@@ -702,7 +702,7 @@ class XmlWriterMacroVisitor extends TypeTreeVisitor {
       cache: StatementsCache
   )(
       tpe: cache.quotes.reflect.TypeRepr,
-      value: cache.quotes.reflect.Term,
+      valueTerm: cache.quotes.reflect.Term,
       annotations: Set[AnnotationInfo],
       context: Context,
       visitNode: VisitNodeFunction
@@ -716,7 +716,7 @@ class XmlWriterMacroVisitor extends TypeTreeVisitor {
 
     visitNode(using cache, this)(
       tpe = tpe,
-      value = value,
+      valueTerm = valueTerm,
       annotations = itemAnnotations,
       isCollectionItem = true,
       context = context
@@ -738,7 +738,7 @@ class XmlWriterMacroVisitor extends TypeTreeVisitor {
       tpe: cache.quotes.reflect.TypeRepr,
       keyTpe: cache.quotes.reflect.TypeRepr,
       valueTpe: cache.quotes.reflect.TypeRepr,
-      value: cache.quotes.reflect.Term,
+      valueTerm: cache.quotes.reflect.Term,
       annotations: Set[AnnotationInfo],
       context: Context
   ): Context = {
@@ -754,8 +754,8 @@ class XmlWriterMacroVisitor extends TypeTreeVisitor {
       cache: StatementsCache
   )(
       tpe: cache.quotes.reflect.TypeRepr,
-      key: cache.quotes.reflect.Term,
-      value: cache.quotes.reflect.Term,
+      keyTerm: cache.quotes.reflect.Term,
+      valueTerm: cache.quotes.reflect.Term,
       annotations: Set[AnnotationInfo],
       context: Context,
       visitNode: VisitNodeFunction
@@ -763,10 +763,10 @@ class XmlWriterMacroVisitor extends TypeTreeVisitor {
     given cache.quotes.type = cache.quotes
     visitNode(using cache, this)(
       tpe = tpe.toTypeRepr,
-      value = value.toTerm,
+      valueTerm = valueTerm.toTerm,
       annotations = Set.empty,
       isCollectionItem = true,
-      context = context.copy(tagName = TagName(StringUtils.applyToString(key.toTerm)))
+      context = context.copy(tagName = TagName(StringUtils.applyToString(keyTerm)))
     )
   }
 
@@ -785,7 +785,7 @@ class XmlWriterMacroVisitor extends TypeTreeVisitor {
       tpe: cache.quotes.reflect.TypeRepr,
       keyTpe: cache.quotes.reflect.TypeRepr,
       valueTpe: cache.quotes.reflect.TypeRepr,
-      value: cache.quotes.reflect.Term,
+      valueTerm: cache.quotes.reflect.Term,
       annotations: Set[AnnotationInfo],
       context: Context
   ): Context = {
@@ -801,18 +801,18 @@ class XmlWriterMacroVisitor extends TypeTreeVisitor {
       cache: StatementsCache
   )(
       tpe: cache.quotes.reflect.TypeRepr,
-      key: cache.quotes.reflect.Term,
-      value: cache.quotes.reflect.Term,
+      keyTerm: cache.quotes.reflect.Term,
+      valueTerm: cache.quotes.reflect.Term,
       annotations: Set[AnnotationInfo],
       context: Context,
       visitNode: VisitNodeFunction
   ): Unit = {
     visitNode(using cache, this)(
       tpe = tpe.toTypeRepr,
-      value = value.toTerm,
+      valueTerm = valueTerm.toTerm,
       annotations = Set.empty,
       isCollectionItem = true,
-      context = context.copy(tagName = TagName(StringUtils.applyToString(key.toTerm)))
+      context = context.copy(tagName = TagName(StringUtils.applyToString(keyTerm)))
     )
   }
 
@@ -829,13 +829,13 @@ class XmlWriterMacroVisitor extends TypeTreeVisitor {
       cache: StatementsCache
   )(
       tpe: cache.quotes.reflect.TypeRepr,
-      value: cache.quotes.reflect.Term,
+      valueTerm: cache.quotes.reflect.Term,
       annotations: Set[AnnotationInfo],
       context: Context
   ): Context = {
     if !context.hasTag
     then {
-      val attributes: cache.quotes.reflect.Term = collectAttributesFromCaseClass(tpe, value)
+      val attributes: cache.quotes.reflect.Term = collectAttributesFromCaseClass(tpe, valueTerm)
       context.builder.appendElementStartWithAttributes(context.tagName, attributes)
     }
     context
@@ -846,14 +846,14 @@ class XmlWriterMacroVisitor extends TypeTreeVisitor {
   )(
       tpe: cache.quotes.reflect.TypeRepr,
       name: String,
-      value: cache.quotes.reflect.Term,
+      valueTerm: cache.quotes.reflect.Term,
       annotations: Set[AnnotationInfo],
       context: Context,
       visitNode: VisitNodeFunction
   ): Unit = {
     visitNode(using cache, this)(
       tpe = tpe,
-      value = value,
+      valueTerm = valueTerm,
       context = context.copy(tagName = TagName(name), hasTag = false),
       isCollectionItem = false,
       annotations = AnnotationUtils.annotationsOf(tpe.toTypeRepr)

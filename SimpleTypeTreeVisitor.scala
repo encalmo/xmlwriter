@@ -15,7 +15,7 @@ trait SimpleTypeTreeVisitor extends TypeTreeVisitor {
       cache: StatementsCache
   )(
       tpe: cache.quotes.reflect.TypeRepr,
-      value: cache.quotes.reflect.Term,
+      valueTerm: cache.quotes.reflect.Term,
       annotations: Set[AnnotationInfo],
       context: Context
   ): Context
@@ -26,7 +26,7 @@ trait SimpleTypeTreeVisitor extends TypeTreeVisitor {
   )(
       tpe: cache.quotes.reflect.TypeRepr,
       name: TagName,
-      value: cache.quotes.reflect.Term,
+      valueTerm: cache.quotes.reflect.Term,
       annotations: Set[AnnotationInfo],
       context: Context,
       visitNode: VisitNodeFunction
@@ -45,7 +45,7 @@ trait SimpleTypeTreeVisitor extends TypeTreeVisitor {
       cache: StatementsCache
   )(
       tpe: cache.quotes.reflect.TypeRepr,
-      value: cache.quotes.reflect.Term,
+      valueTerm: cache.quotes.reflect.Term,
       annotations: Set[AnnotationInfo],
       context: Context
   ): Context
@@ -56,7 +56,7 @@ trait SimpleTypeTreeVisitor extends TypeTreeVisitor {
   )(
       tpe: cache.quotes.reflect.TypeRepr,
       name: String,
-      value: cache.quotes.reflect.Term,
+      valueTerm: cache.quotes.reflect.Term,
       annotations: Set[AnnotationInfo],
       isCollectionItem: Boolean,
       context: Context,
@@ -80,7 +80,7 @@ trait SimpleTypeTreeVisitor extends TypeTreeVisitor {
       cache: StatementsCache
   )(
       tpe: cache.quotes.reflect.TypeRepr,
-      value: cache.quotes.reflect.Term,
+      valueTerm: cache.quotes.reflect.Term,
       annotations: Set[AnnotationInfo],
       isCollectionItem: Boolean,
       context: Context,
@@ -92,7 +92,7 @@ trait SimpleTypeTreeVisitor extends TypeTreeVisitor {
       cache: StatementsCache
   )(
       tpe: cache.quotes.reflect.TypeRepr,
-      value: cache.quotes.reflect.Term,
+      valueTerm: cache.quotes.reflect.Term,
       context: Context
   ): Option[Unit] = None
 
@@ -101,7 +101,7 @@ trait SimpleTypeTreeVisitor extends TypeTreeVisitor {
       cache: StatementsCache
   )(
       tpe: cache.quotes.reflect.TypeRepr,
-      value: cache.quotes.reflect.Term,
+      valueTerm: cache.quotes.reflect.Term,
       annotations: Set[AnnotationInfo],
       isCollectionItem: Boolean,
       context: Context,
@@ -109,7 +109,7 @@ trait SimpleTypeTreeVisitor extends TypeTreeVisitor {
   ): Unit = {
     visitNode(using cache, this)(
       tpe = tpe,
-      value = value,
+      valueTerm = valueTerm,
       annotations = annotations,
       isCollectionItem = isCollectionItem,
       context = context
@@ -130,7 +130,7 @@ trait SimpleTypeTreeVisitor extends TypeTreeVisitor {
       cache: StatementsCache
   )(
       tpe: cache.quotes.reflect.TypeRepr,
-      value: cache.quotes.reflect.Term,
+      valueTerm: cache.quotes.reflect.Term,
       annotations: Set[AnnotationInfo],
       isCollectionItem: Boolean,
       context: Context,
@@ -138,7 +138,7 @@ trait SimpleTypeTreeVisitor extends TypeTreeVisitor {
   ): Unit = {
     visitNode(using cache, this)(
       tpe = tpe,
-      value = value,
+      valueTerm = valueTerm,
       annotations = annotations,
       isCollectionItem = isCollectionItem,
       context = context
@@ -150,7 +150,7 @@ trait SimpleTypeTreeVisitor extends TypeTreeVisitor {
       cache: StatementsCache
   )(
       tpe: cache.quotes.reflect.TypeRepr,
-      value: cache.quotes.reflect.Term,
+      valueTerm: cache.quotes.reflect.Term,
       annotations: Set[AnnotationInfo],
       isCollectionItem: Boolean,
       context: Context,
@@ -158,7 +158,7 @@ trait SimpleTypeTreeVisitor extends TypeTreeVisitor {
   ): Unit = {
     visitNode(using cache, this)(
       tpe = tpe,
-      value = value,
+      valueTerm = valueTerm,
       annotations = annotations,
       isCollectionItem = isCollectionItem,
       context = context
@@ -171,7 +171,7 @@ trait SimpleTypeTreeVisitor extends TypeTreeVisitor {
   )(
       tpe: cache.quotes.reflect.TypeRepr,
       upperBoundTpe: Option[cache.quotes.reflect.TypeRepr],
-      value: cache.quotes.reflect.Term,
+      valueTerm: cache.quotes.reflect.Term,
       annotations: Set[AnnotationInfo],
       isCollectionItem: Boolean,
       context: Context,
@@ -182,7 +182,7 @@ trait SimpleTypeTreeVisitor extends TypeTreeVisitor {
       case Some(upperBoundTpe) =>
         visitNode(using cache, this)(
           tpe = upperBoundTpe,
-          value = value,
+          valueTerm = valueTerm,
           annotations = annotations,
           isCollectionItem = isCollectionItem,
           context = context
@@ -191,7 +191,7 @@ trait SimpleTypeTreeVisitor extends TypeTreeVisitor {
       case None =>
         visitAsString(
           tpe = tpe,
-          value = value.methodCall("toString", List()).toTerm,
+          valueTerm = valueTerm.methodCall("toString", List()).toTerm,
           context = context
         )
     }
@@ -202,11 +202,11 @@ trait SimpleTypeTreeVisitor extends TypeTreeVisitor {
       cache: StatementsCache
   )(
       tpe: cache.quotes.reflect.TypeRepr,
-      value: cache.quotes.reflect.Term,
+      valueTerm: cache.quotes.reflect.Term,
       annotations: Set[AnnotationInfo],
       context: Context
   ): Context =
-    beforeProduct(tpe, value, annotations, context)
+    beforeProduct(tpe, valueTerm, annotations, context)
 
   /** Visit a field of a case class node in the type tree. */
   inline def visitCaseClassField(using
@@ -214,12 +214,12 @@ trait SimpleTypeTreeVisitor extends TypeTreeVisitor {
   )(
       tpe: cache.quotes.reflect.TypeRepr,
       name: String,
-      value: cache.quotes.reflect.Term,
+      valueTerm: cache.quotes.reflect.Term,
       annotations: Set[AnnotationInfo],
       context: Context,
       visitNode: VisitNodeFunction
   ): Unit =
-    visitProductField(tpe, name, value, annotations, context, visitNode)
+    visitProductField(tpe, name, valueTerm, annotations, context, visitNode)
 
   /** After visiting a case class node in the type tree. */
   inline def afterCaseClass(using
@@ -235,11 +235,11 @@ trait SimpleTypeTreeVisitor extends TypeTreeVisitor {
       cache: StatementsCache
   )(
       tpe: cache.quotes.reflect.TypeRepr,
-      value: cache.quotes.reflect.Term,
+      valueTerm: cache.quotes.reflect.Term,
       annotations: Set[AnnotationInfo],
       context: Context
   ): Context =
-    beforeSum(tpe, value, annotations, context)
+    beforeSum(tpe, valueTerm, annotations, context)
 
   /** Visit a case value of an enum node in the type tree. */
   inline def visitEnumCaseValue(using
@@ -247,13 +247,13 @@ trait SimpleTypeTreeVisitor extends TypeTreeVisitor {
   )(
       tpe: cache.quotes.reflect.TypeRepr,
       name: String,
-      value: cache.quotes.reflect.Term,
+      valueTerm: cache.quotes.reflect.Term,
       annotations: Set[AnnotationInfo],
       isCollectionItem: Boolean,
       context: Context,
       visitNode: VisitNodeFunction
   ): Unit =
-    visitSumCase(tpe, name, value, annotations, isCollectionItem, context, visitNode)
+    visitSumCase(tpe, name, valueTerm, annotations, isCollectionItem, context, visitNode)
 
   /** Visit a case class of an enum node in the type tree. */
   inline def visitEnumCaseClass(using
@@ -261,13 +261,13 @@ trait SimpleTypeTreeVisitor extends TypeTreeVisitor {
   )(
       tpe: cache.quotes.reflect.TypeRepr,
       name: String,
-      value: cache.quotes.reflect.Term,
+      valueTerm: cache.quotes.reflect.Term,
       annotations: Set[AnnotationInfo],
       isCollectionItem: Boolean,
       context: Context,
       visitNode: VisitNodeFunction
   ): Unit =
-    visitSumCase(tpe, name, value, annotations, isCollectionItem, context, visitNode)
+    visitSumCase(tpe, name, valueTerm, annotations, isCollectionItem, context, visitNode)
 
   /** After visiting an enum node in the type tree. */
   inline def afterEnum(using
@@ -283,23 +283,23 @@ trait SimpleTypeTreeVisitor extends TypeTreeVisitor {
   )(
       tpe: cache.quotes.reflect.TypeRepr,
       itemTpe: cache.quotes.reflect.TypeRepr,
-      value: cache.quotes.reflect.Term,
+      valueTerm: cache.quotes.reflect.Term,
       annotations: Set[AnnotationInfo],
       context: Context
   ): Context =
-    beforeCollection(tpe, itemTpe, value, annotations, context)
+    beforeCollection(tpe, itemTpe, valueTerm, annotations, context)
 
   /** Visit an item of an array node in the type tree. */
   inline def visitArrayItem(using
       cache: StatementsCache
   )(
       tpe: cache.quotes.reflect.TypeRepr,
-      value: cache.quotes.reflect.Term,
+      valueTerm: cache.quotes.reflect.Term,
       annotations: Set[AnnotationInfo],
       context: Context,
       visitNode: VisitNodeFunction
   ): Unit =
-    visitCollectionItem(tpe, value, annotations, context, visitNode)
+    visitCollectionItem(tpe, valueTerm, annotations, context, visitNode)
 
   /** After visiting an array node in the type tree. */
   inline def afterArray(using
@@ -315,23 +315,23 @@ trait SimpleTypeTreeVisitor extends TypeTreeVisitor {
       cache: StatementsCache
   )(
       tpe: cache.quotes.reflect.TypeRepr,
-      value: cache.quotes.reflect.Term,
+      valueTerm: cache.quotes.reflect.Term,
       annotations: Set[AnnotationInfo],
       context: Context
   ): Context =
-    beforeCollection(tpe, tpe, value, annotations, context)
+    beforeCollection(tpe, tpe, valueTerm, annotations, context)
 
   /** Visit an item of a tuple node in the type tree. */
   inline def visitTupleItem(using
       cache: StatementsCache
   )(
       tpe: cache.quotes.reflect.TypeRepr,
-      value: cache.quotes.reflect.Term,
+      valueTerm: cache.quotes.reflect.Term,
       annotations: Set[AnnotationInfo],
       context: Context,
       visitNode: VisitNodeFunction
   ): Unit =
-    visitCollectionItem(tpe, value, annotations, context, visitNode)
+    visitCollectionItem(tpe, valueTerm, annotations, context, visitNode)
 
   /** After visiting a tuple node in the type tree. */
   inline def afterTuple(using
@@ -347,11 +347,11 @@ trait SimpleTypeTreeVisitor extends TypeTreeVisitor {
       cache: StatementsCache
   )(
       tpe: cache.quotes.reflect.TypeRepr,
-      value: cache.quotes.reflect.Term,
+      valueTerm: cache.quotes.reflect.Term,
       annotations: Set[AnnotationInfo],
       context: Context
   ): Context =
-    beforeProduct(tpe, value, annotations, context)
+    beforeProduct(tpe, valueTerm, annotations, context)
 
   /** Visit a field of a named tuple node in the type tree. */
   inline def visitNamedTupleItem(using
@@ -359,12 +359,12 @@ trait SimpleTypeTreeVisitor extends TypeTreeVisitor {
   )(
       tpe: cache.quotes.reflect.TypeRepr,
       name: String,
-      value: cache.quotes.reflect.Term,
+      valueTerm: cache.quotes.reflect.Term,
       annotations: Set[AnnotationInfo],
       context: Context,
       visitNode: VisitNodeFunction
   ): Unit =
-    visitProductField(tpe, name, value, annotations, context, visitNode)
+    visitProductField(tpe, name, valueTerm, annotations, context, visitNode)
 
   /** After visiting a named tuple node in the type tree. */
   inline def afterNamedTuple(using
@@ -381,11 +381,11 @@ trait SimpleTypeTreeVisitor extends TypeTreeVisitor {
   )(
       tpe: cache.quotes.reflect.TypeRepr,
       fields: cache.quotes.reflect.TypeRepr,
-      value: cache.quotes.reflect.Term,
+      valueTerm: cache.quotes.reflect.Term,
       annotations: Set[AnnotationInfo],
       context: Context
   ): Context =
-    beforeProduct(tpe, value, annotations, context)
+    beforeProduct(tpe, valueTerm, annotations, context)
 
   /** Visit a field of a Selectable node in the type tree. */
   inline def visitSelectableField(using
@@ -393,12 +393,12 @@ trait SimpleTypeTreeVisitor extends TypeTreeVisitor {
   )(
       tpe: cache.quotes.reflect.TypeRepr,
       name: String,
-      value: cache.quotes.reflect.Term,
+      valueTerm: cache.quotes.reflect.Term,
       annotations: Set[AnnotationInfo],
       context: Context,
       visitNode: VisitNodeFunction
   ): Unit =
-    visitProductField(tpe, name, value, annotations, context, visitNode)
+    visitProductField(tpe, name, valueTerm, annotations, context, visitNode)
 
   /** After visiting a Selectable node in the type tree. */
   inline def afterSelectable(using
@@ -414,25 +414,25 @@ trait SimpleTypeTreeVisitor extends TypeTreeVisitor {
       cache: StatementsCache
   )(
       tpe: cache.quotes.reflect.TypeRepr,
-      value: cache.quotes.reflect.Term,
+      valueTerm: cache.quotes.reflect.Term,
       annotations: Set[AnnotationInfo],
       context: Context
   ): Context =
-    beforeSum(tpe, value, annotations, context)
+    beforeSum(tpe, valueTerm, annotations, context)
 
   /** Visit a member type of a union type node in the type tree. */
   inline def visitUnionMember(using
       cache: StatementsCache
   )(
       tpe: cache.quotes.reflect.TypeRepr,
-      value: cache.quotes.reflect.Term,
+      valueTerm: cache.quotes.reflect.Term,
       annotations: Set[AnnotationInfo],
       isCollectionItem: Boolean,
       context: Context,
       visitNode: VisitNodeFunction
   ): Unit = {
     given cache.quotes.type = cache.quotes
-    visitSumCase(tpe, TypeNameUtils.typeNameOf(tpe), value, annotations, isCollectionItem, context, visitNode)
+    visitSumCase(tpe, TypeNameUtils.typeNameOf(tpe), valueTerm, annotations, isCollectionItem, context, visitNode)
   }
 
   /** After visiting a union type node in the type tree. */
@@ -449,23 +449,23 @@ trait SimpleTypeTreeVisitor extends TypeTreeVisitor {
   )(
       tpe: cache.quotes.reflect.TypeRepr,
       itemTpe: cache.quotes.reflect.TypeRepr,
-      value: cache.quotes.reflect.Term,
+      valueTerm: cache.quotes.reflect.Term,
       annotations: Set[AnnotationInfo],
       context: Context
   ): Context =
-    beforeCollection(tpe, itemTpe, value, annotations, context)
+    beforeCollection(tpe, itemTpe, valueTerm, annotations, context)
 
   /** Visit an item of a Java Iterable node in the type tree. */
   inline def visitJavaIterableItem(using
       cache: StatementsCache
   )(
       tpe: cache.quotes.reflect.TypeRepr,
-      value: cache.quotes.reflect.Term,
+      valueTerm: cache.quotes.reflect.Term,
       annotations: Set[AnnotationInfo],
       context: Context,
       visitNode: VisitNodeFunction
   ): Unit =
-    visitCollectionItem(tpe, value, annotations, context, visitNode)
+    visitCollectionItem(tpe, valueTerm, annotations, context, visitNode)
 
   /** After visiting a Java Iterable node in the type tree. */
   inline def afterJavaIterable(using
@@ -482,24 +482,24 @@ trait SimpleTypeTreeVisitor extends TypeTreeVisitor {
       tpe: cache.quotes.reflect.TypeRepr,
       keyTpe: cache.quotes.reflect.TypeRepr,
       valueTpe: cache.quotes.reflect.TypeRepr,
-      value: cache.quotes.reflect.Term,
+      valueTerm: cache.quotes.reflect.Term,
       annotations: Set[AnnotationInfo],
       context: Context
   ): Context =
-    beforeProduct(tpe, value, annotations, context)
+    beforeProduct(tpe, valueTerm, annotations, context)
 
   /** Visit an entry of a Map node in the type tree. */
   inline def visitMapEntry(using
       cache: StatementsCache
   )(
       tpe: cache.quotes.reflect.TypeRepr,
-      key: cache.quotes.reflect.Term,
-      value: cache.quotes.reflect.Term,
+      keyTerm: cache.quotes.reflect.Term,
+      valueTerm: cache.quotes.reflect.Term,
       annotations: Set[AnnotationInfo],
       context: Context,
       visitNode: VisitNodeFunction
   ): Unit =
-    visitProductField(tpe, TagName(key), value, annotations, context, visitNode)
+    visitProductField(tpe, TagName(keyTerm), valueTerm, annotations, context, visitNode)
 
   /** After visiting a Map node in the type tree. */
   inline def afterMap(using
@@ -517,24 +517,24 @@ trait SimpleTypeTreeVisitor extends TypeTreeVisitor {
       tpe: cache.quotes.reflect.TypeRepr,
       keyTpe: cache.quotes.reflect.TypeRepr,
       valueTpe: cache.quotes.reflect.TypeRepr,
-      value: cache.quotes.reflect.Term,
+      valueTerm: cache.quotes.reflect.Term,
       annotations: Set[AnnotationInfo],
       context: Context
   ): Context =
-    beforeMap(tpe, keyTpe, valueTpe, value, annotations, context)
+    beforeMap(tpe, keyTpe, valueTpe, valueTerm, annotations, context)
 
   /** Visit an entry of a Java Map node in the type tree. */
   inline def visitJavaMapEntry(using
       cache: StatementsCache
   )(
       tpe: cache.quotes.reflect.TypeRepr,
-      key: cache.quotes.reflect.Term,
-      value: cache.quotes.reflect.Term,
+      keyTerm: cache.quotes.reflect.Term,
+      valueTerm: cache.quotes.reflect.Term,
       annotations: Set[AnnotationInfo],
       context: Context,
       visitNode: VisitNodeFunction
   ): Unit =
-    visitMapEntry(tpe, key, value, annotations, context, visitNode)
+    visitMapEntry(tpe, keyTerm, valueTerm, annotations, context, visitNode)
 
   /** After visiting a Java Map node in the type tree. */
   inline def afterJavaMap(using
@@ -549,11 +549,11 @@ trait SimpleTypeTreeVisitor extends TypeTreeVisitor {
       cache: StatementsCache
   )(
       tpe: cache.quotes.reflect.TypeRepr,
-      value: cache.quotes.reflect.Term,
+      valueTerm: cache.quotes.reflect.Term,
       annotations: Set[AnnotationInfo],
       context: Context
   ): Context =
-    beforeProduct(tpe, value, annotations, context)
+    beforeProduct(tpe, valueTerm, annotations, context)
 
   /** Visit a field of a Java Record node in the type tree. */
   inline def visitJavaRecordField(using
@@ -561,12 +561,12 @@ trait SimpleTypeTreeVisitor extends TypeTreeVisitor {
   )(
       tpe: cache.quotes.reflect.TypeRepr,
       name: String,
-      value: cache.quotes.reflect.Term,
+      valueTerm: cache.quotes.reflect.Term,
       annotations: Set[AnnotationInfo],
       context: Context,
       visitNode: VisitNodeFunction
   ): Unit =
-    visitProductField(tpe, name, value, annotations, context, visitNode)
+    visitProductField(tpe, name, valueTerm, annotations, context, visitNode)
 
   /** After visiting a Java Record node in the type tree. */
   inline def afterJavaRecord(using

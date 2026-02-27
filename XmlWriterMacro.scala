@@ -65,13 +65,13 @@ object XmlWriterMacro {
     val builder = new XmlWriterMacroVisitor.Builder
     builder.initialize(builderExpr)
 
-    val term = expr.asTerm match {
+    val valueTerm = expr.asTerm match {
       case Inlined(_, _, t) => t
       case t                => t
     }
 
     val trace = scala.collection.mutable.Buffer.empty[String]
-    val annotations = getValueAnnotations(term)
+    val annotations = getValueAnnotations(valueTerm)
 
     given visitor: XmlWriterMacroVisitor = new XmlWriterMacroVisitor()
 
@@ -89,7 +89,7 @@ object XmlWriterMacro {
     else {
       TypeTreeIterator.visitNode(
         tpe = TypeRepr.of[A],
-        value = term,
+        valueTerm = valueTerm,
         context = XmlWriterMacroContext(tagName = tagName, builder = builder, hasTag = false),
         isCollectionItem = false,
         annotations = annotations,

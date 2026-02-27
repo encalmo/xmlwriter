@@ -47,6 +47,54 @@ class XmlWriterSpec extends munit.FunSuite {
     )
   }
 
+  test("write a tuple of instances of a generic case class") {
+    case class Example[A](value: A)
+    val address = Address(street = "123 Main St", city = "Anytown", postcode = "12345")
+    val entity = (Example(value = "test"), Example(value = address))
+    val xml = XmlWriter.writeIndented(entity)
+    println(xml)
+    assertEquals(
+      xml,
+      """|<?xml version='1.0' encoding='UTF-8'?>
+         |<Tuple2>
+         |    <Example>
+         |        <value>test</value>
+         |    </Example>
+         |    <Example>
+         |        <value>
+         |            <street>123 Main St</street>
+         |            <city>Anytown</city>
+         |            <zipcode>12345</zipcode>
+         |        </value>
+         |    </Example>
+         |</Tuple2>""".stripMargin
+    )
+  }
+
+  test("write a list of instances of a generic case class") {
+    case class Example[A](value: A)
+    val address = Address(street = "123 Main St", city = "Anytown", postcode = "12345")
+    val entity = List(Example(value = "test"), Example(value = address))
+    val xml = XmlWriter.writeIndented(entity)
+    println(xml)
+    assertEquals(
+      xml,
+      """|<?xml version='1.0' encoding='UTF-8'?>
+         |<List>
+         |    <Example>
+         |        <value>test</value>
+         |    </Example>
+         |    <Example>
+         |        <value>
+         |            <street>123 Main St</street>
+         |            <city>Anytown</city>
+         |            <zipcode>12345</zipcode>
+         |        </value>
+         |    </Example>
+         |</List>""".stripMargin
+    )
+  }
+
   test("write simple generic case class with class type parameter") {
     case class Example[A](value: A)
     val entity = Example(value = Address(street = "123 Main St", city = "Anytown", postcode = "12345"))
