@@ -249,11 +249,11 @@ println(xml)
 
 Use with SBT
 
-    libraryDependencies += "org.encalmo" %% "xmlwriter" % "0.11.0"
+    libraryDependencies += "org.encalmo" %% "xmlwriter" % "0.11.1"
 
 or with SCALA-CLI
 
-    //> using dep org.encalmo::xmlwriter:0.11.0
+    //> using dep org.encalmo::xmlwriter:0.11.1
 
 ## More examples
 
