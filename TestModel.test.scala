@@ -15,7 +15,7 @@ case class Person(
     tags: List[tag],
     citizenship: Citizenship,
     immigrationStatus: Option[ImmigrationStatus],
-    @xmlTag("marital") @xmlNoItemTags maritalStatus: Array[
+    @xmlTag("marital") maritalStatus: Array[
       MaritalStatus
     ],
     @xmlItemTag("Hobby") hobbies: List[Hobby],
@@ -77,7 +77,7 @@ enum Hobby {
 object ImmigrationStatus {
   given XmlWriter[ImmigrationStatus] =
     new XmlWriter[ImmigrationStatus] {
-      def write(name: String, value: ImmigrationStatus, createTag: Boolean)(using
+      def write(name: Option[String], value: ImmigrationStatus, createTag: Boolean)(using
           builder: XmlOutputBuilder
       ): Unit = {
         builder.appendElementStart("current-immigration-status")
@@ -103,12 +103,12 @@ object Disability {
 
   given XmlWriter[Disability] =
     new XmlWriter[Disability] {
-      def write(name: String, value: Disability, createTag: Boolean)(using
+      def write(name: Option[String], value: Disability, createTag: Boolean)(using
           builder: XmlOutputBuilder
       ): Unit = {
-        if createTag then builder.appendElementStart(name)
+        if createTag then builder.appendElementStart(name.getOrElse("Disability"))
         builder.appendText(value.value)
-        if createTag then builder.appendElementEnd(name)
+        if createTag then builder.appendElementEnd(name.getOrElse("Disability"))
       }
     }
 }
@@ -135,6 +135,8 @@ enum TestEnum {
   case Bar(name: String)
 }
 
+@xmlAdditionalTag("Benefit")
+@xmlEnumCaseValuePlain
 enum Benefit {
   case ChildBenefit
   case UniversalCredit
@@ -145,6 +147,8 @@ enum Benefit {
   case Other(name: String)
 }
 
+@xmlAdditionalTag("Cars")
+@xmlEnumCaseValuePlain
 enum Cars {
   case Ford
   case Toyota
@@ -158,6 +162,7 @@ object Boats {
   def apply(values: String*): Boats = values.toSet
 }
 
+@xmlAdditionalTag("Planes")
 sealed trait Planes
 case class Boeing(model: String) extends Planes
 case class Airbus(model: String) extends Planes

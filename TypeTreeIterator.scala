@@ -67,7 +67,7 @@ object TypeTreeIterator {
 
     val context2 = visitor.beforeNode(allAnnotations, context)
 
-    if (debugIndent > 0) then
+    if (debugIndent >= 0) then
       trace.append(
         "  " * debugIndent
           + ":: "
@@ -313,7 +313,7 @@ object TypeTreeIterator {
         .getOrElse(maybeProcessNodeDirectly)
     else maybeProcessNodeDirectly
 
-    visitor.afterNode(context)
+    visitor.afterNode(allAnnotations, context)
   }
 
   def visitAsString(using
@@ -413,26 +413,26 @@ object TypeTreeIterator {
             EnumUtils.transformToMatchTerm(
               tpe.toTypeRepr,
               valueTerm = entity,
-              functionWhenCaseValue = { (tpe, name, valueTerm, annotations) =>
+              functionWhenCaseValue = { (tpe, name, valueTerm, caseAnnotations) =>
                 block {
                   visitor.visitEnumCaseValue(
                     tpe = tpe.toTypeRepr,
                     name = name,
                     valueTerm = valueTerm.toTerm,
-                    annotations = annotations ++ annotations,
+                    annotations = annotations ++ caseAnnotations,
                     isCollectionItem = isCollectionItem,
                     context = context2,
                     visitNode = visitNodeFunction(trace, debugIndent + 1)
                   )
                 }
               },
-              functionWhenCaseClass = { (tpe, name, valueTerm, annotations) =>
+              functionWhenCaseClass = { (tpe, name, valueTerm, caseAnnotations) =>
                 block {
                   visitor.visitEnumCaseClass(
                     tpe = tpe.toTypeRepr,
                     name = name,
                     valueTerm = valueTerm.toTerm,
-                    annotations = annotations ++ annotations,
+                    annotations = annotations ++ caseAnnotations,
                     isCollectionItem = isCollectionItem,
                     context = context2,
                     visitNode = visitNodeFunction(trace, debugIndent + 1)
@@ -990,7 +990,7 @@ object TypeTreeIterator {
       tpe: cache.quotes.reflect.TypeRepr,
       message: String
   ): Unit = {
-    if (debugIndent > 0) then trace.append("  " * debugIndent + " > " + message)
+    if (debugIndent >= 0) then trace.append("  " * debugIndent + " > " + message)
   }
 
   inline def createMethodName(using

@@ -19,7 +19,7 @@ trait TypeTreeVisitor {
   def beforeNode(using cache: StatementsCache)(annotations: Set[AnnotationInfo], context: Context): Context
 
   /** After visiting a node in the type tree. */
-  def afterNode(using cache: StatementsCache)(context: Context): Unit
+  def afterNode(using cache: StatementsCache)(annotations: Set[AnnotationInfo], context: Context): Unit
 
   /** Maybe process the node directly without walking the tree further. */
   def maybeProcessNodeDirectly(using

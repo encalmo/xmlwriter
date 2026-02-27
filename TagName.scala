@@ -26,3 +26,30 @@ extension (tagName: TagName) {
       case _              => tagName.asInstanceOf[DynamicTagName](using cache).show(using Printer.TreeCode)
     }
 }
+
+extension (tagNameCandidate: Option[TagName]) {
+  def resolve(using cache: StatementsCache): cache.quotes.reflect.Term =
+    given cache.quotes.type = cache.quotes
+    import cache.quotes.reflect.*
+    tagNameCandidate match {
+      case Some(string: String) =>
+        OptionUtils.wrapInSome(TypeRepr.of[String], Literal(StringConstant(string)), Literal(StringConstant(string)))
+
+      case Some(tagName) =>
+        OptionUtils.wrapInSome(
+          TypeRepr.of[String],
+          tagName.asInstanceOf[DynamicTagName](using cache),
+          tagName.asInstanceOf[DynamicTagName](using cache)
+        )
+
+      case None => OptionUtils.none
+    }
+
+  def show(using cache: StatementsCache): String =
+    import cache.quotes.reflect.*
+    tagNameCandidate match {
+      case Some(string: String) => string
+      case Some(tagName)        => tagName.asInstanceOf[DynamicTagName](using cache).show(using Printer.TreeCode)
+      case None                 => "<undefined>"
+    }
+}

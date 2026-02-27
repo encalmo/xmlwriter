@@ -1,12 +1,11 @@
 package org.encalmo.writer.xml
 
-import org.encalmo.utils.TypeTreeIterator
 import org.encalmo.utils.AnnotationUtils.*
 import org.encalmo.utils.StatementsCache
 import org.encalmo.utils.StatementsCache.*
-import org.encalmo.utils.TypeNameUtils.*
-import org.encalmo.writer.xml.XmlOutputBuilder
 import org.encalmo.utils.TagName
+import org.encalmo.utils.TypeTreeIterator
+import org.encalmo.writer.xml.XmlOutputBuilder
 
 import scala.quoted.*
 
@@ -35,7 +34,16 @@ object XmlWriterMacro {
   )(using
       Quotes
   ): Expr[Unit] = {
-    writeImpl(typeNameExpr[A], expr, builder, true)
+    given cache: StatementsCache = new StatementsCache
+    given cache.quotes.type = cache.quotes
+    import cache.quotes.reflect.*
+    writeUsingTypeTreeIterator[A](
+      tagNameCandidate = None,
+      expr = expr,
+      builderExpr = builder,
+      summonTypeclassInstance = true
+    )
+    cache.asTerm.asExprOf[Unit]
   }
 
   def writeImpl[A: Type](
@@ -47,14 +55,14 @@ object XmlWriterMacro {
     given cache: StatementsCache = new StatementsCache
     given cache.quotes.type = cache.quotes
     import cache.quotes.reflect.*
-    val tagName2 = tagName.value.map(TagName(_)).getOrElse(TagName(tagName.asTerm))
-    writeUsingTypeTreeIterator[A](tagName2, expr, builder, summonTypeclassInstance)
+    val tagNameCandidate = Some(tagName.value.map(TagName(_)).getOrElse(TagName(tagName.asTerm)))
+    writeUsingTypeTreeIterator[A](tagNameCandidate, expr, builder, summonTypeclassInstance)
     cache.asTerm.asExprOf[Unit]
   }
 
   /** Entry method to write the value of any type to the XML output using TypeTreeIterator and StatementsCache. */
   def writeUsingTypeTreeIterator[A: Type](
-      tagName: TagName,
+      tagNameCandidate: Option[TagName],
       expr: Expr[A],
       builderExpr: Expr[XmlOutputBuilder],
       summonTypeclassInstance: Boolean
@@ -90,7 +98,7 @@ object XmlWriterMacro {
       TypeTreeIterator.visitNode(
         tpe = TypeRepr.of[A],
         valueTerm = valueTerm,
-        context = XmlWriterMacroContext(tagName = tagName, builder = builder, hasTag = false),
+        context = XmlWriterMacroContext(tagNameCandidate = tagNameCandidate, builder = builder, hasTag = false),
         isCollectionItem = false,
         annotations = annotations,
         trace = trace,

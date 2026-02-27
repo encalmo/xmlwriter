@@ -265,13 +265,13 @@ object YesNo {
   given XmlWriter[YesNo] = new XmlWriter[YesNo] {
     def label: String = "YesNo"
 
-    def write(name: String, value: YesNo, createTag: Boolean)(using builder: XmlOutputBuilder): Unit =
-      if createTag then builder.appendElementStart(name)
+    def write(name: Option[String], value: YesNo, createTag: Boolean)(using builder: XmlOutputBuilder): Unit =
+      if createTag then builder.appendElementStart(name.getOrElse("YesNo"))
       builder.appendText(value match {
         case true  => "yes"
         case false => "no"
       })
-      if createTag then builder.appendElementEnd(name)
+      if createTag then builder.appendElementEnd(name.getOrElse("YesNo"))
   }
 }
 

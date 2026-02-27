@@ -18,43 +18,69 @@ import org.encalmo.utils.TypeNameUtils
 import org.encalmo.utils.TagName
 import org.encalmo.utils.{show, resolve}
 
-case class XmlWriterMacroContext(tagName: TagName, builder: XmlWriterMacroVisitor.Builder, hasTag: Boolean) {
-  override def toString: String = s"$tagName hasTag=$hasTag"
+case class XmlWriterMacroContext(
+    tagNameCandidate: Option[TagName],
+    builder: XmlWriterMacroVisitor.Builder,
+    hasTag: Boolean
+) {
+
+  inline def tagNameOr(using cache: StatementsCache)(tpe: cache.quotes.reflect.TypeRepr): TagName =
+    given cache.quotes.type = cache.quotes
+    tagNameCandidate.getOrElse(TagName(TypeNameUtils.typeNameOf(tpe)))
+
+  inline def maybeSetTagNameCandidate(using
+      cache: StatementsCache
+  )(tpe: cache.quotes.reflect.TypeRepr): XmlWriterMacroContext =
+    given cache.quotes.type = cache.quotes
+    tagNameCandidate match {
+      case Some(tagName) => this
+      case None          => copy(tagNameCandidate = Some(TagName(TypeNameUtils.typeNameOf(tpe))))
+    }
+
+  inline override def toString: String = s"${tagNameCandidate.map(_.toString).getOrElse("<undefined>")} hasTag=$hasTag"
 }
 
 class XmlWriterMacroVisitor extends TypeTreeVisitor {
 
   type Context = XmlWriterMacroContext
 
-  override def createVariableNamePrefix(using cache: StatementsCache)(context: XmlWriterMacroContext): String =
-    TypeNameUtils.toValueName(context.tagName.show)
+  inline override def createVariableNamePrefix(using cache: StatementsCache)(context: XmlWriterMacroContext): String =
+    TypeNameUtils.toValueName(context.tagNameCandidate.map(_.show).getOrElse("x"))
 
   inline override def beforeNode(using
       cache: StatementsCache
   )(annotations: Set[AnnotationInfo], context: XmlWriterMacroContext): XmlWriterMacroContext = {
     given cache.quotes.type = cache.quotes
 
-    val tagName2: TagName =
-      context.tagName match {
-        case string: String =>
+    val tagNameCandidate2: Option[TagName] =
+      context.tagNameCandidate
+        .map { tagName =>
           annotations
-            .getStringOrDefault[annotation.xmlTag](
-              parameter = "name",
-              defaultValue = string
-            )
-        case other => other
-      }
+            .getString[annotation.xmlTag](parameter = "name")
+            .getOrElse(tagName)
+        }
+        .orElse(
+          annotations
+            .getString[annotation.xmlTag](parameter = "name")
+        )
 
     val isXmlContent: Boolean = annotations.exists[annotation.xmlContent]
     val shouldTag: Boolean = !context.hasTag && !isXmlContent
 
-    context.copy(tagName = tagName2, hasTag = !shouldTag)
+    val additionalTag = annotations.getString[annotation.xmlAdditionalTag](parameter = "name")
+    if !context.hasTag then additionalTag.foreach(tag => context.builder.appendElementStart(TagName(tag)))
+
+    context.copy(tagNameCandidate = tagNameCandidate2, hasTag = !shouldTag)
   }
 
   /** After visiting a node in the type tree. */
-  inline def afterNode(using cache: StatementsCache)(context: Context): Unit = {}
+  inline def afterNode(using cache: StatementsCache)(annotations: Set[AnnotationInfo], context: Context): Unit = {
+    given cache.quotes.type = cache.quotes
+    val additionalTag = annotations.getString[annotation.xmlAdditionalTag](parameter = "name")
+    if !context.hasTag then additionalTag.foreach(tag => context.builder.appendElementEnd(TagName(tag)))
+  }
 
-  override def maybeProcessNodeDirectly(using
+  inline override def maybeProcessNodeDirectly(using
       cache: StatementsCache
   )(
       tpe: cache.quotes.reflect.TypeRepr,
@@ -75,10 +101,9 @@ class XmlWriterMacroVisitor extends TypeTreeVisitor {
 
     maybeTagValue
       .map { valueTerm =>
-        // debug(trace, debugIndent, tpe, "writeXmlValue")
-        if !context.hasTag then context.builder.appendElementStart(context.tagName)
+        if !context.hasTag then context.builder.appendElementStart(context.tagNameOr(tpe))
         context.builder.appendText(Literal(StringConstant(valueTerm)))
-        if !context.hasTag then context.builder.appendElementEnd(context.tagName)
+        if !context.hasTag then context.builder.appendElementEnd(context.tagNameOr(tpe))
 
       }
       .orElse {
@@ -88,11 +113,11 @@ class XmlWriterMacroVisitor extends TypeTreeVisitor {
               selector = selector,
               tpe = tpe,
               valueTerm = valueTerm,
-              functionWhenSelected = { (tpe, valueTerm) =>
+              functionWhenSelected = { (valueTpe, valueTerm) =>
                 visitNode(using cache, this)(
-                  tpe = tpe,
+                  tpe = valueTpe,
                   valueTerm = valueTerm,
-                  context = context,
+                  context = context.maybeSetTagNameCandidate(tpe),
                   annotations = annotations.remove[annotation.xmlValueSelector],
                   isCollectionItem = isCollectionItem
                 )
@@ -102,7 +127,7 @@ class XmlWriterMacroVisitor extends TypeTreeVisitor {
       }
   }
 
-  override def maybeSummonTypeclassInstance(using
+  inline override def maybeSummonTypeclassInstance(using
       cache: StatementsCache
   )(tpe: cache.quotes.reflect.TypeRepr, valueTerm: cache.quotes.reflect.Term, context: Context): Option[Unit] = {
     given cache.quotes.type = cache.quotes
@@ -115,7 +140,7 @@ class XmlWriterMacroVisitor extends TypeTreeVisitor {
             writer.asTerm.methodCall(
               "write",
               List(
-                context.tagName.resolve,
+                context.tagNameCandidate.resolve,
                 valueTerm,
                 Literal(BooleanConstant(!context.hasTag))
               ),
@@ -126,19 +151,19 @@ class XmlWriterMacroVisitor extends TypeTreeVisitor {
     }
   }
 
-  override def visitAsString(using
+  inline override def visitAsString(using
       cache: StatementsCache
   )(
       tpe: cache.quotes.reflect.TypeRepr,
       valueTerm: cache.quotes.reflect.Term,
       context: Context
   ): Unit = {
-    if !context.hasTag then context.builder.appendElementStart(context.tagName)
+    if !context.hasTag then context.builder.appendElementStart(context.tagNameOr(tpe))
     context.builder.appendText(valueTerm)
-    if !context.hasTag then context.builder.appendElementEnd(context.tagName)
+    if !context.hasTag then context.builder.appendElementEnd(context.tagNameOr(tpe))
   }
 
-  override def beforeCaseClass(using
+  inline override def beforeCaseClass(using
       cache: StatementsCache
   )(
       tpe: cache.quotes.reflect.TypeRepr,
@@ -149,7 +174,7 @@ class XmlWriterMacroVisitor extends TypeTreeVisitor {
     if !context.hasTag
     then {
       val attributes: cache.quotes.reflect.Term = collectAttributesFromCaseClass(tpe, valueTerm)
-      context.builder.appendElementStartWithAttributes(context.tagName, attributes)
+      context.builder.appendElementStartWithAttributes(context.tagNameOr(tpe), attributes)
     }
     context
   }
@@ -187,7 +212,7 @@ class XmlWriterMacroVisitor extends TypeTreeVisitor {
     IterableUtils.createStaticList(TypeRepr.of[Tuple2[String, String]], list.toList)
   }
 
-  override def visitCaseClassField(using
+  inline override def visitCaseClassField(using
       cache: StatementsCache
   )(
       tpe: cache.quotes.reflect.TypeRepr,
@@ -202,13 +227,19 @@ class XmlWriterMacroVisitor extends TypeTreeVisitor {
     val isAttribute = annotations.exists[annotation.xmlAttribute]
     // skip field if was aleady written as an attribute
     if !isAttribute then {
+      val isTagLabelAndType = annotations.exists[annotation.xmlTagLabelAndType]
+      if isTagLabelAndType then context.builder.appendElementStart(TagName(name))
       visitNode(using cache, this)(
         tpe = tpe,
         valueTerm = valueTerm,
-        context = context.copy(tagName = TagName(name), hasTag = false),
+        context = context.copy(
+          tagNameCandidate = if isTagLabelAndType then None else Some(TagName(name)),
+          hasTag = false
+        ),
         isCollectionItem = false,
         annotations = AnnotationUtils.annotationsOf(tpe.toTypeRepr) ++ annotations
       )
+      if isTagLabelAndType then context.builder.appendElementEnd(TagName(name))
     }
   }
 
@@ -218,10 +249,10 @@ class XmlWriterMacroVisitor extends TypeTreeVisitor {
       tpe: cache.quotes.reflect.TypeRepr,
       context: Context
   ): Unit = {
-    if !context.hasTag then context.builder.appendElementEnd(context.tagName)
+    if !context.hasTag then context.builder.appendElementEnd(context.tagNameOr(tpe))
   }
 
-  override def beforeEnum(using
+  inline override def beforeEnum(using
       cache: StatementsCache
   )(
       tpe: cache.quotes.reflect.TypeRepr,
@@ -232,7 +263,7 @@ class XmlWriterMacroVisitor extends TypeTreeVisitor {
     context
   }
 
-  override def visitEnumCaseValue(using
+  inline override def visitEnumCaseValue(using
       cache: StatementsCache
   )(
       tpe: cache.quotes.reflect.TypeRepr,
@@ -245,25 +276,42 @@ class XmlWriterMacroVisitor extends TypeTreeVisitor {
   ): Unit = {
     given cache.quotes.type = cache.quotes
 
+    val isEnumCaseValuePlain = annotations.exists[annotation.xmlEnumCaseValuePlain]
+
     val customTagValue: Option[cache.quotes.reflect.Term] =
       annotations.getTerm[annotation.xmlValue](parameter = "value")
 
     val tagValue = customTagValue.getOrElse(valueTerm)
-    if !context.hasTag
+    val hasEnumCaseClasses = EnumUtils.hasEnumCaseClasses(tpe.toTypeRepr)
+
+    if context.hasTag
     then {
-      context.builder.appendElementStart(context.tagName)
-      context.builder.appendText(tagValue)
-      context.builder.appendElementEnd(context.tagName)
-    } else if EnumUtils.hasEnumCaseClasses(tpe.toTypeRepr)
-    then {
-      context.builder.appendElementStart(TagName(tagValue.toTerm.applyToString))
-      context.builder.appendElementEnd(TagName(tagValue.toTerm.applyToString))
-    } else {
-      context.builder.appendText(tagValue)
-    }
+      if hasEnumCaseClasses && !isEnumCaseValuePlain
+      then {
+        context.builder.appendElementStart(TypeNameUtils.typeNameOf(tpe))
+        context.builder.appendElementEnd(TypeNameUtils.typeNameOf(tpe))
+      } else {
+        context.builder.appendText(tagValue)
+      }
+    } else
+      context.tagNameCandidate match {
+        case Some(tagName) =>
+          context.builder.appendElementStart(tagName)
+          context.builder.appendText(tagValue)
+          context.builder.appendElementEnd(tagName)
+
+        case None =>
+          if hasEnumCaseClasses && !isEnumCaseValuePlain
+          then {
+            context.builder.appendElementStart(TypeNameUtils.typeNameOf(tpe))
+            context.builder.appendElementEnd(TypeNameUtils.typeNameOf(tpe))
+          } else {
+            context.builder.appendText(tagValue)
+          }
+      }
   }
 
-  override def visitEnumCaseClass(using
+  inline override def visitEnumCaseClass(using
       cache: StatementsCache
   )(
       tpe: cache.quotes.reflect.TypeRepr,
@@ -274,15 +322,15 @@ class XmlWriterMacroVisitor extends TypeTreeVisitor {
       context: Context,
       visitNode: VisitNodeFunction
   ): Unit = {
-    if !context.hasTag then context.builder.appendElementStart(context.tagName)
+    if !context.hasTag then context.builder.appendElementStart(context.tagNameOr(tpe))
     visitNode(using cache, this)(
       tpe = tpe,
       valueTerm = valueTerm,
       annotations = annotations,
       isCollectionItem = isCollectionItem,
-      context = context.copy(tagName = TagName(name), hasTag = false)
+      context = context.copy(tagNameCandidate = None, hasTag = true)
     )
-    if !context.hasTag then context.builder.appendElementEnd(context.tagName)
+    if !context.hasTag then context.builder.appendElementEnd(context.tagNameOr(tpe))
   }
 
   inline override def afterEnum(using
@@ -302,19 +350,12 @@ class XmlWriterMacroVisitor extends TypeTreeVisitor {
       context: Context,
       visitNode: VisitNodeFunction
   ): Unit = {
-    given cache.quotes.type = cache.quotes
-
-    val itemLabel =
-      if isCollectionItem && context.tagName == "Option"
-      then TypeNameUtils.typeNameOf(tpe)
-      else context.tagName
-
     visitNode(using cache, this)(
       tpe = tpe,
       valueTerm = valueTerm,
       annotations = annotations,
       isCollectionItem = isCollectionItem,
-      context = context.copy(tagName = itemLabel)
+      context = context
     )
   }
 
@@ -337,18 +378,12 @@ class XmlWriterMacroVisitor extends TypeTreeVisitor {
       context: Context,
       visitNode: VisitNodeFunction
   ): Unit = {
-    given cache.quotes.type = cache.quotes
-    val itemLabel =
-      if isCollectionItem && context.tagName == "Either"
-      then TypeNameUtils.typeNameOf(tpe)
-      else context.tagName
-
     visitNode(using cache, this)(
       tpe = tpe,
       valueTerm = valueTerm,
       annotations = annotations,
       isCollectionItem = isCollectionItem,
-      context = context.copy(tagName = itemLabel)
+      context = context
     )
   }
 
@@ -362,18 +397,12 @@ class XmlWriterMacroVisitor extends TypeTreeVisitor {
       context: Context,
       visitNode: VisitNodeFunction
   ): Unit = {
-    given cache.quotes.type = cache.quotes
-    val itemLabel =
-      if isCollectionItem && context.tagName == "Either"
-      then TypeNameUtils.typeNameOf(tpe)
-      else context.tagName
-
     visitNode(using cache, this)(
       tpe = tpe,
       valueTerm = valueTerm,
       annotations = annotations,
       isCollectionItem = isCollectionItem,
-      context = context.copy(tagName = itemLabel)
+      context = context
     )
   }
 
@@ -396,7 +425,7 @@ class XmlWriterMacroVisitor extends TypeTreeVisitor {
           valueTerm = valueTerm,
           annotations = annotations,
           isCollectionItem = isCollectionItem,
-          context = context
+          context = context.maybeSetTagNameCandidate(tpe)
         )
 
       case None =>
@@ -408,7 +437,7 @@ class XmlWriterMacroVisitor extends TypeTreeVisitor {
     }
   }
 
-  override def beforeCollection(using
+  inline override def beforeCollection(using
       cache: StatementsCache
   )(
       tpe: cache.quotes.reflect.TypeRepr,
@@ -420,12 +449,11 @@ class XmlWriterMacroVisitor extends TypeTreeVisitor {
     given cache.quotes.type = cache.quotes
     // check if the item tags should be skipped
     val skipItemTags = annotations.exists[annotation.xmlNoItemTags]
-
-    if !context.hasTag then context.builder.appendElementStart(context.tagName)
-    context.copy(tagName = TagName(TypeNameUtils.typeNameOf(itemTpe)), hasTag = skipItemTags)
+    if !context.hasTag then context.builder.appendElementStart(context.tagNameOr(tpe))
+    context.copy(tagNameCandidate = None, hasTag = skipItemTags)
   }
 
-  override def visitCollectionItem(using
+  inline override def visitCollectionItem(using
       cache: StatementsCache
   )(
       tpe: cache.quotes.reflect.TypeRepr,
@@ -440,7 +468,12 @@ class XmlWriterMacroVisitor extends TypeTreeVisitor {
       .find[annotation.xmlItemTag]
       .map(_.renameAs[annotation.xmlTag])
       .toSet
+      ++ annotations
+        .remove[annotation.xmlTag]
+        .remove[annotation.xmlAdditionalItemTag]
 
+    val additionalItemTag = annotations.getString[annotation.xmlAdditionalItemTag](parameter = "name")
+    additionalItemTag.foreach(tag => context.builder.appendElementStart(TagName(tag)))
     visitNode(using cache, this)(
       tpe = tpe,
       valueTerm = valueTerm,
@@ -448,6 +481,7 @@ class XmlWriterMacroVisitor extends TypeTreeVisitor {
       isCollectionItem = true,
       context = context
     )
+    additionalItemTag.foreach(tag => context.builder.appendElementEnd(TagName(tag)))
   }
 
   inline override def afterCollection(using
@@ -456,10 +490,10 @@ class XmlWriterMacroVisitor extends TypeTreeVisitor {
       tpe: cache.quotes.reflect.TypeRepr,
       context: Context
   ): Unit = {
-    if !context.hasTag then context.builder.appendElementEnd(context.tagName)
+    if !context.hasTag then context.builder.appendElementEnd(context.tagNameOr(tpe))
   }
 
-  override def beforeArray(using
+  inline override def beforeArray(using
       cache: StatementsCache
   )(
       tpe: cache.quotes.reflect.TypeRepr,
@@ -467,16 +501,45 @@ class XmlWriterMacroVisitor extends TypeTreeVisitor {
       valueTerm: cache.quotes.reflect.Term,
       annotations: Set[AnnotationInfo],
       context: Context
+  ): Context =
+    beforeCollection(tpe, itemTpe, valueTerm, annotations, context)
+
+  inline override def visitArrayItem(using
+      cache: StatementsCache
+  )(
+      tpe: cache.quotes.reflect.TypeRepr,
+      valueTerm: cache.quotes.reflect.Term,
+      annotations: Set[AnnotationInfo],
+      context: Context,
+      visitNode: VisitNodeFunction
+  ): Unit =
+    visitCollectionItem(tpe, valueTerm, annotations, context, visitNode)
+
+  inline override def afterArray(using
+      cache: StatementsCache
+  )(
+      tpe: cache.quotes.reflect.TypeRepr,
+      context: Context
+  ): Unit =
+    afterCollection(tpe, context)
+
+  inline override def beforeTuple(using
+      cache: StatementsCache
+  )(
+      tpe: cache.quotes.reflect.TypeRepr,
+      valueTerm: cache.quotes.reflect.Term,
+      annotations: Set[AnnotationInfo],
+      context: Context
   ): Context = {
     given cache.quotes.type = cache.quotes
     // check if the item tags should be skipped
     val skipItemTags = annotations.exists[annotation.xmlNoItemTags]
 
-    if !context.hasTag then context.builder.appendElementStart(context.tagName)
-    context.copy(tagName = TagName(TypeNameUtils.typeNameOf(itemTpe)), hasTag = skipItemTags)
+    if !context.hasTag then context.builder.appendElementStart(context.tagNameOr(tpe))
+    context.copy(tagNameCandidate = None, hasTag = skipItemTags)
   }
 
-  override def visitArrayItem(using
+  inline override def visitTupleItem(using
       cache: StatementsCache
   )(
       tpe: cache.quotes.reflect.TypeRepr,
@@ -486,12 +549,17 @@ class XmlWriterMacroVisitor extends TypeTreeVisitor {
       visitNode: VisitNodeFunction
   ): Unit = {
     given cache.quotes.type = cache.quotes
+    val additionalItemTag = annotations.getString[annotation.xmlAdditionalItemTag](parameter = "name")
     // get the name of the item tag from the annotation or default to the type name
     val itemAnnotations = annotations
       .find[annotation.xmlItemTag]
       .map(_.renameAs[annotation.xmlTag])
       .toSet
+      ++ annotations
+        .remove[annotation.xmlTag]
+        .remove[annotation.xmlAdditionalItemTag]
 
+    additionalItemTag.foreach(tag => context.builder.appendElementStart(TagName(tag)))
     visitNode(using cache, this)(
       tpe = tpe,
       valueTerm = valueTerm,
@@ -499,51 +567,7 @@ class XmlWriterMacroVisitor extends TypeTreeVisitor {
       isCollectionItem = true,
       context = context
     )
-  }
-
-  inline override def afterArray(using
-      cache: StatementsCache
-  )(
-      tpe: cache.quotes.reflect.TypeRepr,
-      context: Context
-  ): Unit = {
-    if !context.hasTag then context.builder.appendElementEnd(context.tagName)
-  }
-
-  override def beforeTuple(using
-      cache: StatementsCache
-  )(
-      tpe: cache.quotes.reflect.TypeRepr,
-      valueTerm: cache.quotes.reflect.Term,
-      annotations: Set[AnnotationInfo],
-      context: Context
-  ): Context = {
-    given cache.quotes.type = cache.quotes
-    // check if the item tags should be skipped
-    val skipItemTags = annotations.exists[annotation.xmlNoItemTags]
-
-    if !context.hasTag then context.builder.appendElementStart(context.tagName)
-    context.copy(hasTag = skipItemTags)
-  }
-
-  override def visitTupleItem(using
-      cache: StatementsCache
-  )(
-      tpe: cache.quotes.reflect.TypeRepr,
-      valueTerm: cache.quotes.reflect.Term,
-      annotations: Set[AnnotationInfo],
-      context: Context,
-      visitNode: VisitNodeFunction
-  ): Unit = {
-    given cache.quotes.type = cache.quotes
-    val itemTag: Option[String] = annotations.getString[annotation.xmlItemTag](parameter = "name")
-    visitNode(using cache, this)(
-      tpe = tpe,
-      valueTerm = valueTerm,
-      annotations = Set.empty,
-      isCollectionItem = true,
-      context = context.copy(tagName = itemTag.getOrElse(TypeNameUtils.typeNameOf(tpe)))
-    )
+    additionalItemTag.foreach(tag => context.builder.appendElementEnd(TagName(tag)))
   }
 
   inline override def afterTuple(using
@@ -552,10 +576,10 @@ class XmlWriterMacroVisitor extends TypeTreeVisitor {
       tpe: cache.quotes.reflect.TypeRepr,
       context: Context
   ): Unit = {
-    if !context.hasTag then context.builder.appendElementEnd(context.tagName)
+    if !context.hasTag then context.builder.appendElementEnd(context.tagNameOr(tpe))
   }
 
-  override def beforeNamedTuple(using
+  inline override def beforeNamedTuple(using
       cache: StatementsCache
   )(
       tpe: cache.quotes.reflect.TypeRepr,
@@ -567,11 +591,11 @@ class XmlWriterMacroVisitor extends TypeTreeVisitor {
     // check if the item tags should be skipped
     val skipItemTags = annotations.exists[annotation.xmlNoItemTags]
 
-    if !context.hasTag then context.builder.appendElementStart(context.tagName)
+    if !context.hasTag then context.builder.appendElementStart(context.tagNameOr(tpe))
     context.copy(hasTag = skipItemTags)
   }
 
-  override def visitNamedTupleItem(using
+  inline override def visitNamedTupleItem(using
       cache: StatementsCache
   )(
       tpe: cache.quotes.reflect.TypeRepr,
@@ -587,7 +611,7 @@ class XmlWriterMacroVisitor extends TypeTreeVisitor {
       valueTerm = valueTerm,
       annotations = Set.empty,
       isCollectionItem = false,
-      context = context.copy(tagName = name)
+      context = context.copy(tagNameCandidate = Some(TagName(name)))
     )
   }
 
@@ -597,10 +621,10 @@ class XmlWriterMacroVisitor extends TypeTreeVisitor {
       tpe: cache.quotes.reflect.TypeRepr,
       context: Context
   ): Unit = {
-    if !context.hasTag then context.builder.appendElementEnd(context.tagName)
+    if !context.hasTag then context.builder.appendElementEnd(context.tagNameOr(tpe))
   }
 
-  override def beforeSelectable(using
+  inline override def beforeSelectable(using
       cache: StatementsCache
   )(
       tpe: cache.quotes.reflect.TypeRepr,
@@ -609,11 +633,11 @@ class XmlWriterMacroVisitor extends TypeTreeVisitor {
       annotations: Set[AnnotationInfo],
       context: Context
   ): Context = {
-    if !context.hasTag then context.builder.appendElementStart(context.tagName)
+    if !context.hasTag then context.builder.appendElementStart(context.tagNameOr(tpe))
     context.copy(hasTag = false)
   }
 
-  override def visitSelectableField(using
+  inline override def visitSelectableField(using
       cache: StatementsCache
   )(
       tpe: cache.quotes.reflect.TypeRepr,
@@ -628,7 +652,7 @@ class XmlWriterMacroVisitor extends TypeTreeVisitor {
       valueTerm = valueTerm,
       annotations = annotations,
       isCollectionItem = false,
-      context = context.copy(tagName = TagName(name))
+      context = context.copy(tagNameCandidate = Some(TagName(name)))
     )
   }
 
@@ -638,10 +662,10 @@ class XmlWriterMacroVisitor extends TypeTreeVisitor {
       tpe: cache.quotes.reflect.TypeRepr,
       context: Context
   ): Unit = {
-    if !context.hasTag then context.builder.appendElementEnd(context.tagName)
+    if !context.hasTag then context.builder.appendElementEnd(context.tagNameOr(tpe))
   }
 
-  override def beforeUnion(using
+  inline override def beforeUnion(using
       cache: StatementsCache
   )(
       tpe: cache.quotes.reflect.TypeRepr,
@@ -649,11 +673,15 @@ class XmlWriterMacroVisitor extends TypeTreeVisitor {
       annotations: Set[AnnotationInfo],
       context: Context
   ): Context = {
-    if !context.hasTag then context.builder.appendElementStart(context.tagName)
-    context.copy(hasTag = true)
+    given cache.quotes.type = cache.quotes
+    if !context.hasTag && context.tagNameCandidate.isDefined
+    then {
+      context.builder.appendElementStart(context.tagNameOr(tpe))
+      context.copy(tagNameCandidate = Some(TagName(TypeNameUtils.typeNameOf(tpe))), hasTag = true)
+    } else context
   }
 
-  override def visitUnionMember(using
+  inline override def visitUnionMember(using
       cache: StatementsCache
   )(
       tpe: cache.quotes.reflect.TypeRepr,
@@ -663,6 +691,7 @@ class XmlWriterMacroVisitor extends TypeTreeVisitor {
       context: Context,
       visitNode: VisitNodeFunction
   ): Unit = {
+    given cache.quotes.type = cache.quotes
     visitNode(using cache, this)(
       tpe = tpe,
       valueTerm = valueTerm,
@@ -678,10 +707,13 @@ class XmlWriterMacroVisitor extends TypeTreeVisitor {
       tpe: cache.quotes.reflect.TypeRepr,
       context: Context
   ): Unit = {
-    if !context.hasTag then context.builder.appendElementEnd(context.tagName)
+    if !context.hasTag && context.tagNameCandidate.isDefined
+    then {
+      context.builder.appendElementEnd(context.tagNameOr(tpe))
+    }
   }
 
-  override def beforeJavaIterable(using
+  inline override def beforeJavaIterable(using
       cache: StatementsCache
   )(
       tpe: cache.quotes.reflect.TypeRepr,
@@ -689,16 +721,10 @@ class XmlWriterMacroVisitor extends TypeTreeVisitor {
       valueTerm: cache.quotes.reflect.Term,
       annotations: Set[AnnotationInfo],
       context: Context
-  ): Context = {
-    given cache.quotes.type = cache.quotes
-    // check if the item tags should be skipped
-    val skipItemTags = annotations.exists[annotation.xmlNoItemTags]
+  ): Context =
+    beforeCollection(tpe, itemTpe, valueTerm, annotations, context)
 
-    if !context.hasTag then context.builder.appendElementStart(context.tagName)
-    context.copy(tagName = TagName(TypeNameUtils.typeNameOf(itemTpe)), hasTag = skipItemTags)
-  }
-
-  override def visitJavaIterableItem(using
+  inline override def visitJavaIterableItem(using
       cache: StatementsCache
   )(
       tpe: cache.quotes.reflect.TypeRepr,
@@ -706,33 +732,18 @@ class XmlWriterMacroVisitor extends TypeTreeVisitor {
       annotations: Set[AnnotationInfo],
       context: Context,
       visitNode: VisitNodeFunction
-  ): Unit = {
-    given cache.quotes.type = cache.quotes
-    // get the name of the item tag from the annotation or default to the type name
-    val itemAnnotations = annotations
-      .find[annotation.xmlItemTag]
-      .map(_.renameAs[annotation.xmlTag])
-      .toSet
-
-    visitNode(using cache, this)(
-      tpe = tpe,
-      valueTerm = valueTerm,
-      annotations = itemAnnotations,
-      isCollectionItem = true,
-      context = context
-    )
-  }
+  ): Unit =
+    visitCollectionItem(tpe, valueTerm, annotations, context, visitNode)
 
   inline override def afterJavaIterable(using
       cache: StatementsCache
   )(
       tpe: cache.quotes.reflect.TypeRepr,
       context: Context
-  ): Unit = {
-    if !context.hasTag then context.builder.appendElementEnd(context.tagName)
-  }
+  ): Unit =
+    afterCollection(tpe, context)
 
-  override def beforeMap(using
+  inline override def beforeMap(using
       cache: StatementsCache
   )(
       tpe: cache.quotes.reflect.TypeRepr,
@@ -746,11 +757,11 @@ class XmlWriterMacroVisitor extends TypeTreeVisitor {
     // check if the item tags should be skipped
     val skipItemTags = annotations.exists[annotation.xmlNoItemTags]
 
-    if !context.hasTag then context.builder.appendElementStart(context.tagName)
-    context.copy(tagName = TagName(TypeNameUtils.typeNameOf(valueTpe)), hasTag = skipItemTags)
+    if !context.hasTag then context.builder.appendElementStart(context.tagNameOr(tpe))
+    context.copy(hasTag = skipItemTags)
   }
 
-  override def visitMapEntry(using
+  inline override def visitMapEntry(using
       cache: StatementsCache
   )(
       tpe: cache.quotes.reflect.TypeRepr,
@@ -766,7 +777,7 @@ class XmlWriterMacroVisitor extends TypeTreeVisitor {
       valueTerm = valueTerm.toTerm,
       annotations = Set.empty,
       isCollectionItem = true,
-      context = context.copy(tagName = TagName(StringUtils.applyToString(keyTerm)))
+      context = context.copy(tagNameCandidate = Some(TagName(StringUtils.applyToString(keyTerm))))
     )
   }
 
@@ -776,10 +787,10 @@ class XmlWriterMacroVisitor extends TypeTreeVisitor {
       tpe: cache.quotes.reflect.TypeRepr,
       context: Context
   ): Unit = {
-    if !context.hasTag then context.builder.appendElementEnd(context.tagName)
+    if !context.hasTag then context.builder.appendElementEnd(context.tagNameOr(tpe))
   }
 
-  override def beforeJavaMap(using
+  inline override def beforeJavaMap(using
       cache: StatementsCache
   )(
       tpe: cache.quotes.reflect.TypeRepr,
@@ -793,11 +804,11 @@ class XmlWriterMacroVisitor extends TypeTreeVisitor {
     // check if the item tags should be skipped
     val skipItemTags = annotations.exists[annotation.xmlNoItemTags]
 
-    if !context.hasTag then context.builder.appendElementStart(context.tagName)
-    context.copy(tagName = TagName(TypeNameUtils.typeNameOf(valueTpe)), hasTag = skipItemTags)
+    if !context.hasTag then context.builder.appendElementStart(context.tagNameOr(tpe))
+    context.copy(hasTag = skipItemTags)
   }
 
-  override def visitJavaMapEntry(using
+  inline override def visitJavaMapEntry(using
       cache: StatementsCache
   )(
       tpe: cache.quotes.reflect.TypeRepr,
@@ -812,7 +823,7 @@ class XmlWriterMacroVisitor extends TypeTreeVisitor {
       valueTerm = valueTerm.toTerm,
       annotations = Set.empty,
       isCollectionItem = true,
-      context = context.copy(tagName = TagName(StringUtils.applyToString(keyTerm)))
+      context = context.copy(tagNameCandidate = Some(TagName(StringUtils.applyToString(keyTerm))))
     )
   }
 
@@ -822,10 +833,10 @@ class XmlWriterMacroVisitor extends TypeTreeVisitor {
       tpe: cache.quotes.reflect.TypeRepr,
       context: Context
   ): Unit = {
-    if !context.hasTag then context.builder.appendElementEnd(context.tagName)
+    if !context.hasTag then context.builder.appendElementEnd(context.tagNameOr(tpe))
   }
 
-  override def beforeJavaRecord(using
+  inline override def beforeJavaRecord(using
       cache: StatementsCache
   )(
       tpe: cache.quotes.reflect.TypeRepr,
@@ -836,12 +847,12 @@ class XmlWriterMacroVisitor extends TypeTreeVisitor {
     if !context.hasTag
     then {
       val attributes: cache.quotes.reflect.Term = collectAttributesFromCaseClass(tpe, valueTerm)
-      context.builder.appendElementStartWithAttributes(context.tagName, attributes)
+      context.builder.appendElementStartWithAttributes(context.tagNameOr(tpe), attributes)
     }
     context
   }
 
-  override def visitJavaRecordField(using
+  inline override def visitJavaRecordField(using
       cache: StatementsCache
   )(
       tpe: cache.quotes.reflect.TypeRepr,
@@ -854,7 +865,7 @@ class XmlWriterMacroVisitor extends TypeTreeVisitor {
     visitNode(using cache, this)(
       tpe = tpe,
       valueTerm = valueTerm,
-      context = context.copy(tagName = TagName(name), hasTag = false),
+      context = context.copy(tagNameCandidate = Some(TagName(name)), hasTag = false),
       isCollectionItem = false,
       annotations = AnnotationUtils.annotationsOf(tpe.toTypeRepr)
     )
@@ -866,7 +877,7 @@ class XmlWriterMacroVisitor extends TypeTreeVisitor {
       tpe: cache.quotes.reflect.TypeRepr,
       context: Context
   ): Unit = {
-    if !context.hasTag then context.builder.appendElementEnd(context.tagName)
+    if !context.hasTag then context.builder.appendElementEnd(context.tagNameOr(tpe))
   }
 }
 

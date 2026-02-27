@@ -174,10 +174,13 @@ The example above produces the following code after macro expansion:
 | `@xmlAttribute`       | Marks the target to be serialized as an XML attribute of the enclosing element rather than as a child.   |
 | `@xmlContent`         | Marks target as the content (text value) of the XML element instead of a tag or attribute.           |
 | `@xmlTag`             | Sets a custom XML tag or attribute name for this target (overrides the target name in serialization).   |
-| `@xmlItemTag`         | Specifies the tag name to use for each element in a collection or array.                              |
+| `@xmlAdditionalTag` | Annotation to wrap value in and additional XML element |
+| `@xmlItemTag`         | Annotation to define the name of the XML element wrapping each item in an array or collection. This will override custom names of the items in the collection.                              |
+| `@xmlAdditionalItemTag`         | Annotation to define the name of the XML element additionally wrapping each item in an array or collection. This will NOT override custom names of the items in the collection.                              |
 | `@xmlNoItemTags`      | Prevents wrapping each collection element in an extra XML tag; all items are added directly.          |
 | `@xmlValue`           | Defines a static value for an element, useful for enum cases     |
-| `@xmlValueSelector`   | Selects which member/field/property from a nested type is used as the value/text for this element.    |              |
+| `@xmlValueSelector`   | Selects which member/field/property from a nested type is used as the value/text for this element.    |
+| `@xmlEnumCaseValuePlain`   | Annotation to force writing the enum case value as plain text, without wrapping it in a tag.   |
 
 ## Key abstractions
 

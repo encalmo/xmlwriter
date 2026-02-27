@@ -1,10 +1,11 @@
 package org.encalmo.writer.xml
 
 import java.io.OutputStream
+import org.encalmo.utils.TypeNameUtils
 
 /** Typeclass for writing XML output. */
 trait XmlWriter[A] {
-  def write(name: String, value: A, createTag: Boolean)(using XmlOutputBuilder): Unit
+  def write(name: Option[String], value: A, createTag: Boolean)(using XmlOutputBuilder): Unit
 }
 
 object XmlWriter {
@@ -13,10 +14,18 @@ object XmlWriter {
 
   inline def derived[T]: XmlWriter[T] = ${ derivedImpl[T] }
   private def derivedImpl[T: Type](using Quotes): Expr[XmlWriter[T]] = {
+    val typeName = Expr(TypeNameUtils.typeNameOf[T])
     '{
       new XmlWriter[T] {
-        def write(name: String, value: T, createTag: Boolean)(using builder: XmlOutputBuilder): Unit =
-          ${ XmlWriterMacro.writeImpl[T]('{ name }, '{ value }, '{ builder }, false) }
+        def write(name: Option[String], value: T, createTag: Boolean)(using builder: XmlOutputBuilder): Unit =
+          ${
+            XmlWriterMacro.writeImpl[T](
+              '{ name.getOrElse(${ typeName }) },
+              '{ value },
+              '{ builder },
+              false
+            )
+          }
       }
     }
   }
