@@ -44,6 +44,15 @@ trait TypeTreeVisitor {
       context: Context
   ): Option[Unit]
 
+  /** Visit a node represented by a primitive-like values, including BigDecimal */
+  def visitPrimitive(using
+      cache: StatementsCache
+  )(
+      tpe: cache.quotes.reflect.TypeRepr,
+      valueTerm: cache.quotes.reflect.Term,
+      context: Context
+  ): Unit
+
   /** Visit a node represented by a string value. */
   def visitAsString(using
       cache: StatementsCache

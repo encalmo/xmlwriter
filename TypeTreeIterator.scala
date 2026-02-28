@@ -81,7 +81,7 @@ object TypeTreeIterator {
       tpe match {
 
         case TypeUtils.TypeReprIsPrimitiveOrStringOrBigDecimal() =>
-          visitAsString(
+          visitPrimitive(
             tpe = tpe,
             valueTerm = valueTerm,
             context = context2,
@@ -314,6 +314,21 @@ object TypeTreeIterator {
     else maybeProcessNodeDirectly
 
     visitor.afterNode(allAnnotations, context)
+  }
+
+  def visitPrimitive(using
+      cache: StatementsCache,
+      visitor: TypeTreeVisitor
+  )(
+      tpe: cache.quotes.reflect.TypeRepr,
+      valueTerm: cache.quotes.reflect.Term,
+      context: visitor.Context,
+      isCollectionItem: Boolean,
+      trace: scala.collection.mutable.Buffer[String],
+      debugIndent: Int
+  ): Unit = {
+    debug(trace, debugIndent, tpe, "visitPrimitive")
+    visitor.visitPrimitive(tpe, valueTerm, context)
   }
 
   def visitAsString(using

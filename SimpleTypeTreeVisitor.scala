@@ -4,10 +4,7 @@ import org.encalmo.utils.StatementsCache
 import org.encalmo.utils.AnnotationUtils.AnnotationInfo
 import org.encalmo.utils.TagName
 
-/** Instance of this trait visits the structure (tree) of some Scala type and value
-  * @see
-  *   https://refactoring.guru/design-patterns/visitor
-  */
+/** Simplified version of TypeTreeVisitor leaving only seven methods to be implemented. */
 trait SimpleTypeTreeVisitor extends TypeTreeVisitor {
 
   /** Before visiting a product type node in the type tree. */
@@ -18,9 +15,13 @@ trait SimpleTypeTreeVisitor extends TypeTreeVisitor {
       valueTerm: cache.quotes.reflect.Term,
       annotations: Set[AnnotationInfo],
       context: Context
-  ): Context
+  ): Context = {
+    context
+  }
 
-  /** Visit a field of a product type node in the type tree. */
+  /** Visit a field of a product type node in the type tree. Default implementation just visits the node without any
+    * special processing.
+    */
   def visitProductField(using
       cache: StatementsCache
   )(
@@ -30,7 +31,14 @@ trait SimpleTypeTreeVisitor extends TypeTreeVisitor {
       annotations: Set[AnnotationInfo],
       context: Context,
       visitNode: VisitNodeFunction
-  ): Unit
+  ): Unit =
+    visitNode(using cache, this)(
+      tpe = tpe,
+      valueTerm = valueTerm,
+      annotations = annotations,
+      isCollectionItem = false,
+      context = context
+    )
 
   /** After visiting a product type node in the type tree. */
   def afterProduct(using
@@ -38,7 +46,7 @@ trait SimpleTypeTreeVisitor extends TypeTreeVisitor {
   )(
       tpe: cache.quotes.reflect.TypeRepr,
       context: Context
-  ): Unit
+  ): Unit = {}
 
   /** Before visiting a sum type node in the type tree. */
   def beforeSum(using
@@ -48,9 +56,13 @@ trait SimpleTypeTreeVisitor extends TypeTreeVisitor {
       valueTerm: cache.quotes.reflect.Term,
       annotations: Set[AnnotationInfo],
       context: Context
-  ): Context
+  ): Context = {
+    context
+  }
 
-  /** Visit a case of a sum type node in the type tree. */
+  /** Visit a case of a sum type node in the type tree. Default implementation just visits the node without any special
+    * processing.
+    */
   def visitSumCase(using
       cache: StatementsCache
   )(
@@ -61,7 +73,14 @@ trait SimpleTypeTreeVisitor extends TypeTreeVisitor {
       isCollectionItem: Boolean,
       context: Context,
       visitNode: VisitNodeFunction
-  ): Unit
+  ): Unit =
+    visitNode(using cache, this)(
+      tpe = tpe,
+      valueTerm = valueTerm,
+      annotations = annotations,
+      isCollectionItem = isCollectionItem,
+      context = context
+    )
 
   /** After visiting a sum type node in the type tree. */
   def afterSum(using
@@ -69,14 +88,81 @@ trait SimpleTypeTreeVisitor extends TypeTreeVisitor {
   )(
       tpe: cache.quotes.reflect.TypeRepr,
       context: Context
-  ): Unit
+  ): Unit = {}
 
-  // ---------------------------------------------------
-  // Concrete implementations of the visitor methods
-  // ---------------------------------------------------
+  /** After visiting a node in the type tree. Default implementation does nothing. */
+  inline override def afterNode(using
+      cache: StatementsCache
+  )(annotations: Set[AnnotationInfo], context: Context): Unit = {}
 
-  /** Maybe process the node directly without walking the tree further. */
-  def maybeProcessNodeDirectly(using
+  /** Visit a node represented by a primitive-like values, including BigDecimal. Default implementation does nothing. */
+  inline override def visitPrimitive(using
+      cache: StatementsCache
+  )(
+      tpe: cache.quotes.reflect.TypeRepr,
+      valueTerm: cache.quotes.reflect.Term,
+      context: Context
+  ): Unit = {}
+
+  /** Visit a node represented by a string value. Default implementation does nothing. */
+  inline override def visitAsString(using
+      cache: StatementsCache
+  )(
+      tpe: cache.quotes.reflect.TypeRepr,
+      valueTerm: cache.quotes.reflect.Term,
+      context: Context
+  ): Unit = {}
+
+  /** Before visiting a collection node in the type tree. Default implementation does nothing. */
+  inline override def beforeCollection(using
+      cache: StatementsCache
+  )(
+      tpe: cache.quotes.reflect.TypeRepr,
+      itemTpe: cache.quotes.reflect.TypeRepr,
+      valueTerm: cache.quotes.reflect.Term,
+      annotations: Set[AnnotationInfo],
+      context: Context
+  ): Context = {
+    context
+  }
+
+  /** Visit an item of a collection node in the type tree. Default implementation just visits the node without any
+    * special processing.
+    */
+  inline override def visitCollectionItem(using
+      cache: StatementsCache
+  )(
+      tpe: cache.quotes.reflect.TypeRepr,
+      valueTerm: cache.quotes.reflect.Term,
+      annotations: Set[AnnotationInfo],
+      context: Context,
+      visitNode: VisitNodeFunction
+  ): Unit =
+    visitNode(using cache, this)(
+      tpe = tpe,
+      valueTerm = valueTerm,
+      annotations = annotations,
+      isCollectionItem = true,
+      context = context
+    )
+
+  /** After visiting a collection node in the type tree. Default implementation does nothing. */
+  inline override def afterCollection(using
+      cache: StatementsCache
+  )(
+      tpe: cache.quotes.reflect.TypeRepr,
+      context: Context
+  ): Unit = {}
+
+  /** Create a prefix to use for some intermediate variables. Default implementation returns "it".
+    */
+  inline override def createVariableNamePrefix(using cache: StatementsCache)(context: Context): String =
+    "it"
+
+  /** Maybe process the node directly without walking the tree further. Default implementation returns None, which means
+    * the node will be visited by the default implementation of the visit method.
+    */
+  inline override def maybeProcessNodeDirectly(using
       cache: StatementsCache
   )(
       tpe: cache.quotes.reflect.TypeRepr,
@@ -87,8 +173,10 @@ trait SimpleTypeTreeVisitor extends TypeTreeVisitor {
       visitNode: VisitNodeFunction
   ): Option[Unit] = None
 
-  /** Maybe summon an existing typeclass instance to process the node instead of walking the tree further. */
-  def maybeSummonTypeclassInstance(using
+  /** Maybe summon an existing typeclass instance to process the node instead of walking down the tree further. Default
+    * implementation returns None, which means no typeclass instance will be summoned.
+    */
+  inline override def maybeSummonTypeclassInstance(using
       cache: StatementsCache
   )(
       tpe: cache.quotes.reflect.TypeRepr,
@@ -96,8 +184,8 @@ trait SimpleTypeTreeVisitor extends TypeTreeVisitor {
       context: Context
   ): Option[Unit] = None
 
-  /** Visit a node holding Some value. */
-  inline def visitOptionSome(using
+  /** Visit a node holding Some value. Default implementation just visits the node without any special processing. */
+  inline override def visitOptionSome(using
       cache: StatementsCache
   )(
       tpe: cache.quotes.reflect.TypeRepr,
@@ -116,7 +204,8 @@ trait SimpleTypeTreeVisitor extends TypeTreeVisitor {
     )
   }
 
-  inline def visitOptionNone(using
+  /** Visit a node holding None value. Default implementation does nothing. */
+  inline override def visitOptionNone(using
       cache: StatementsCache
   )(
       tpe: cache.quotes.reflect.TypeRepr,
@@ -125,8 +214,10 @@ trait SimpleTypeTreeVisitor extends TypeTreeVisitor {
       context: Context
   ): Unit = {}
 
-  /** Visit a node holding Either Left value. */
-  inline def visitEitherLeft(using
+  /** Visit a node holding Either Left value. Default implementation just visits the node without any special
+    * processing.
+    */
+  inline override def visitEitherLeft(using
       cache: StatementsCache
   )(
       tpe: cache.quotes.reflect.TypeRepr,
@@ -145,8 +236,10 @@ trait SimpleTypeTreeVisitor extends TypeTreeVisitor {
     )
   }
 
-  /** Visit a node holding Either Right value. */
-  inline def visitEitherRight(using
+  /** Visit a node holding Either Right value. Default implementation just visits the node without any special
+    * processing.
+    */
+  inline override def visitEitherRight(using
       cache: StatementsCache
   )(
       tpe: cache.quotes.reflect.TypeRepr,
@@ -165,8 +258,10 @@ trait SimpleTypeTreeVisitor extends TypeTreeVisitor {
     )
   }
 
-  /** Visit a node holding an opaque type value. */
-  inline def visitOpaqueType(using
+  /** Visit a node holding an opaque type value. Depending on the availabilty of the upper bound type, the default
+    * implementation will either visit respective upper bound type or default to processing string representation.
+    */
+  inline override def visitOpaqueType(using
       cache: StatementsCache
   )(
       tpe: cache.quotes.reflect.TypeRepr,
@@ -198,7 +293,7 @@ trait SimpleTypeTreeVisitor extends TypeTreeVisitor {
   }
 
   /** Before visiting a case class node in the type tree. */
-  inline def beforeCaseClass(using
+  inline override def beforeCaseClass(using
       cache: StatementsCache
   )(
       tpe: cache.quotes.reflect.TypeRepr,
@@ -209,7 +304,7 @@ trait SimpleTypeTreeVisitor extends TypeTreeVisitor {
     beforeProduct(tpe, valueTerm, annotations, context)
 
   /** Visit a field of a case class node in the type tree. */
-  inline def visitCaseClassField(using
+  inline override def visitCaseClassField(using
       cache: StatementsCache
   )(
       tpe: cache.quotes.reflect.TypeRepr,
@@ -222,7 +317,7 @@ trait SimpleTypeTreeVisitor extends TypeTreeVisitor {
     visitProductField(tpe, name, valueTerm, annotations, context, visitNode)
 
   /** After visiting a case class node in the type tree. */
-  inline def afterCaseClass(using
+  inline override def afterCaseClass(using
       cache: StatementsCache
   )(
       tpe: cache.quotes.reflect.TypeRepr,
@@ -231,7 +326,7 @@ trait SimpleTypeTreeVisitor extends TypeTreeVisitor {
     afterProduct(tpe, context)
 
   /** Before visiting an enum node in the type tree. */
-  inline def beforeEnum(using
+  inline override def beforeEnum(using
       cache: StatementsCache
   )(
       tpe: cache.quotes.reflect.TypeRepr,
@@ -242,7 +337,7 @@ trait SimpleTypeTreeVisitor extends TypeTreeVisitor {
     beforeSum(tpe, valueTerm, annotations, context)
 
   /** Visit a case value of an enum node in the type tree. */
-  inline def visitEnumCaseValue(using
+  inline override def visitEnumCaseValue(using
       cache: StatementsCache
   )(
       tpe: cache.quotes.reflect.TypeRepr,
@@ -256,7 +351,7 @@ trait SimpleTypeTreeVisitor extends TypeTreeVisitor {
     visitSumCase(tpe, name, valueTerm, annotations, isCollectionItem, context, visitNode)
 
   /** Visit a case class of an enum node in the type tree. */
-  inline def visitEnumCaseClass(using
+  inline override def visitEnumCaseClass(using
       cache: StatementsCache
   )(
       tpe: cache.quotes.reflect.TypeRepr,
@@ -270,7 +365,7 @@ trait SimpleTypeTreeVisitor extends TypeTreeVisitor {
     visitSumCase(tpe, name, valueTerm, annotations, isCollectionItem, context, visitNode)
 
   /** After visiting an enum node in the type tree. */
-  inline def afterEnum(using
+  inline override def afterEnum(using
       cache: StatementsCache
   )(
       tpe: cache.quotes.reflect.TypeRepr,
@@ -278,7 +373,7 @@ trait SimpleTypeTreeVisitor extends TypeTreeVisitor {
   ): Unit = afterSum(tpe, context)
 
   /** Before visiting an array node in the type tree. */
-  inline def beforeArray(using
+  inline override def beforeArray(using
       cache: StatementsCache
   )(
       tpe: cache.quotes.reflect.TypeRepr,
@@ -290,7 +385,7 @@ trait SimpleTypeTreeVisitor extends TypeTreeVisitor {
     beforeCollection(tpe, itemTpe, valueTerm, annotations, context)
 
   /** Visit an item of an array node in the type tree. */
-  inline def visitArrayItem(using
+  inline override def visitArrayItem(using
       cache: StatementsCache
   )(
       tpe: cache.quotes.reflect.TypeRepr,
@@ -302,7 +397,7 @@ trait SimpleTypeTreeVisitor extends TypeTreeVisitor {
     visitCollectionItem(tpe, valueTerm, annotations, context, visitNode)
 
   /** After visiting an array node in the type tree. */
-  inline def afterArray(using
+  inline override def afterArray(using
       cache: StatementsCache
   )(
       tpe: cache.quotes.reflect.TypeRepr,
@@ -311,7 +406,7 @@ trait SimpleTypeTreeVisitor extends TypeTreeVisitor {
     afterCollection(tpe, context)
 
   /** Before visiting a tuple node in the type tree. */
-  inline def beforeTuple(using
+  inline override def beforeTuple(using
       cache: StatementsCache
   )(
       tpe: cache.quotes.reflect.TypeRepr,
@@ -322,7 +417,7 @@ trait SimpleTypeTreeVisitor extends TypeTreeVisitor {
     beforeCollection(tpe, tpe, valueTerm, annotations, context)
 
   /** Visit an item of a tuple node in the type tree. */
-  inline def visitTupleItem(using
+  inline override def visitTupleItem(using
       cache: StatementsCache
   )(
       tpe: cache.quotes.reflect.TypeRepr,
@@ -334,7 +429,7 @@ trait SimpleTypeTreeVisitor extends TypeTreeVisitor {
     visitCollectionItem(tpe, valueTerm, annotations, context, visitNode)
 
   /** After visiting a tuple node in the type tree. */
-  inline def afterTuple(using
+  inline override def afterTuple(using
       cache: StatementsCache
   )(
       tpe: cache.quotes.reflect.TypeRepr,
@@ -343,7 +438,7 @@ trait SimpleTypeTreeVisitor extends TypeTreeVisitor {
     afterCollection(tpe, context)
 
   /** Before visiting a named tuple node in the type tree. */
-  inline def beforeNamedTuple(using
+  inline override def beforeNamedTuple(using
       cache: StatementsCache
   )(
       tpe: cache.quotes.reflect.TypeRepr,
@@ -354,7 +449,7 @@ trait SimpleTypeTreeVisitor extends TypeTreeVisitor {
     beforeProduct(tpe, valueTerm, annotations, context)
 
   /** Visit a field of a named tuple node in the type tree. */
-  inline def visitNamedTupleItem(using
+  inline override def visitNamedTupleItem(using
       cache: StatementsCache
   )(
       tpe: cache.quotes.reflect.TypeRepr,
@@ -367,7 +462,7 @@ trait SimpleTypeTreeVisitor extends TypeTreeVisitor {
     visitProductField(tpe, name, valueTerm, annotations, context, visitNode)
 
   /** After visiting a named tuple node in the type tree. */
-  inline def afterNamedTuple(using
+  inline override def afterNamedTuple(using
       cache: StatementsCache
   )(
       tpe: cache.quotes.reflect.TypeRepr,
@@ -376,7 +471,7 @@ trait SimpleTypeTreeVisitor extends TypeTreeVisitor {
     afterProduct(tpe, context)
 
   /** Before visiting a Selectable node in the type tree. */
-  inline def beforeSelectable(using
+  inline override def beforeSelectable(using
       cache: StatementsCache
   )(
       tpe: cache.quotes.reflect.TypeRepr,
@@ -388,7 +483,7 @@ trait SimpleTypeTreeVisitor extends TypeTreeVisitor {
     beforeProduct(tpe, valueTerm, annotations, context)
 
   /** Visit a field of a Selectable node in the type tree. */
-  inline def visitSelectableField(using
+  inline override def visitSelectableField(using
       cache: StatementsCache
   )(
       tpe: cache.quotes.reflect.TypeRepr,
@@ -401,7 +496,7 @@ trait SimpleTypeTreeVisitor extends TypeTreeVisitor {
     visitProductField(tpe, name, valueTerm, annotations, context, visitNode)
 
   /** After visiting a Selectable node in the type tree. */
-  inline def afterSelectable(using
+  inline override def afterSelectable(using
       cache: StatementsCache
   )(
       tpe: cache.quotes.reflect.TypeRepr,
@@ -410,7 +505,7 @@ trait SimpleTypeTreeVisitor extends TypeTreeVisitor {
     afterProduct(tpe, context)
 
   /** Before visiting a union type node in the type tree. */
-  inline def beforeUnion(using
+  inline override def beforeUnion(using
       cache: StatementsCache
   )(
       tpe: cache.quotes.reflect.TypeRepr,
@@ -421,7 +516,7 @@ trait SimpleTypeTreeVisitor extends TypeTreeVisitor {
     beforeSum(tpe, valueTerm, annotations, context)
 
   /** Visit a member type of a union type node in the type tree. */
-  inline def visitUnionMember(using
+  inline override def visitUnionMember(using
       cache: StatementsCache
   )(
       tpe: cache.quotes.reflect.TypeRepr,
@@ -436,7 +531,7 @@ trait SimpleTypeTreeVisitor extends TypeTreeVisitor {
   }
 
   /** After visiting a union type node in the type tree. */
-  inline def afterUnion(using
+  inline override def afterUnion(using
       cache: StatementsCache
   )(
       tpe: cache.quotes.reflect.TypeRepr,
@@ -444,7 +539,7 @@ trait SimpleTypeTreeVisitor extends TypeTreeVisitor {
   ): Unit = afterSum(tpe, context)
 
   /** Before visiting a Java Iterable node in the type tree. */
-  inline def beforeJavaIterable(using
+  inline override def beforeJavaIterable(using
       cache: StatementsCache
   )(
       tpe: cache.quotes.reflect.TypeRepr,
@@ -456,7 +551,7 @@ trait SimpleTypeTreeVisitor extends TypeTreeVisitor {
     beforeCollection(tpe, itemTpe, valueTerm, annotations, context)
 
   /** Visit an item of a Java Iterable node in the type tree. */
-  inline def visitJavaIterableItem(using
+  inline override def visitJavaIterableItem(using
       cache: StatementsCache
   )(
       tpe: cache.quotes.reflect.TypeRepr,
@@ -468,7 +563,7 @@ trait SimpleTypeTreeVisitor extends TypeTreeVisitor {
     visitCollectionItem(tpe, valueTerm, annotations, context, visitNode)
 
   /** After visiting a Java Iterable node in the type tree. */
-  inline def afterJavaIterable(using
+  inline override def afterJavaIterable(using
       cache: StatementsCache
   )(
       tpe: cache.quotes.reflect.TypeRepr,
@@ -476,7 +571,7 @@ trait SimpleTypeTreeVisitor extends TypeTreeVisitor {
   ): Unit = afterCollection(tpe, context)
 
   /** Before visiting a Map node in the type tree. */
-  inline def beforeMap(using
+  inline override def beforeMap(using
       cache: StatementsCache
   )(
       tpe: cache.quotes.reflect.TypeRepr,
@@ -489,7 +584,7 @@ trait SimpleTypeTreeVisitor extends TypeTreeVisitor {
     beforeProduct(tpe, valueTerm, annotations, context)
 
   /** Visit an entry of a Map node in the type tree. */
-  inline def visitMapEntry(using
+  inline override def visitMapEntry(using
       cache: StatementsCache
   )(
       tpe: cache.quotes.reflect.TypeRepr,
@@ -502,7 +597,7 @@ trait SimpleTypeTreeVisitor extends TypeTreeVisitor {
     visitProductField(tpe, TagName(keyTerm), valueTerm, annotations, context, visitNode)
 
   /** After visiting a Map node in the type tree. */
-  inline def afterMap(using
+  inline override def afterMap(using
       cache: StatementsCache
   )(
       tpe: cache.quotes.reflect.TypeRepr,
@@ -511,7 +606,7 @@ trait SimpleTypeTreeVisitor extends TypeTreeVisitor {
     afterProduct(tpe, context)
 
   /** Before visiting a Java Map node in the type tree. */
-  inline def beforeJavaMap(using
+  inline override def beforeJavaMap(using
       cache: StatementsCache
   )(
       tpe: cache.quotes.reflect.TypeRepr,
@@ -524,7 +619,7 @@ trait SimpleTypeTreeVisitor extends TypeTreeVisitor {
     beforeMap(tpe, keyTpe, valueTpe, valueTerm, annotations, context)
 
   /** Visit an entry of a Java Map node in the type tree. */
-  inline def visitJavaMapEntry(using
+  inline override def visitJavaMapEntry(using
       cache: StatementsCache
   )(
       tpe: cache.quotes.reflect.TypeRepr,
@@ -537,7 +632,7 @@ trait SimpleTypeTreeVisitor extends TypeTreeVisitor {
     visitMapEntry(tpe, keyTerm, valueTerm, annotations, context, visitNode)
 
   /** After visiting a Java Map node in the type tree. */
-  inline def afterJavaMap(using
+  inline override def afterJavaMap(using
       cache: StatementsCache
   )(
       tpe: cache.quotes.reflect.TypeRepr,
@@ -545,7 +640,7 @@ trait SimpleTypeTreeVisitor extends TypeTreeVisitor {
   ): Unit = afterMap(tpe, context)
 
   /** Before visiting a Java Record node in the type tree. */
-  inline def beforeJavaRecord(using
+  inline override def beforeJavaRecord(using
       cache: StatementsCache
   )(
       tpe: cache.quotes.reflect.TypeRepr,
@@ -556,7 +651,7 @@ trait SimpleTypeTreeVisitor extends TypeTreeVisitor {
     beforeProduct(tpe, valueTerm, annotations, context)
 
   /** Visit a field of a Java Record node in the type tree. */
-  inline def visitJavaRecordField(using
+  inline override def visitJavaRecordField(using
       cache: StatementsCache
   )(
       tpe: cache.quotes.reflect.TypeRepr,
@@ -569,7 +664,7 @@ trait SimpleTypeTreeVisitor extends TypeTreeVisitor {
     visitProductField(tpe, name, valueTerm, annotations, context, visitNode)
 
   /** After visiting a Java Record node in the type tree. */
-  inline def afterJavaRecord(using
+  inline override def afterJavaRecord(using
       cache: StatementsCache
   )(
       tpe: cache.quotes.reflect.TypeRepr,

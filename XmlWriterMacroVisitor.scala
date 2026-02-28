@@ -45,7 +45,7 @@ class XmlWriterMacroVisitor extends TypeTreeVisitor {
   type Context = XmlWriterMacroContext
 
   inline override def createVariableNamePrefix(using cache: StatementsCache)(context: XmlWriterMacroContext): String =
-    TypeNameUtils.toValueName(context.tagNameCandidate.map(_.show).getOrElse("x"))
+    TypeNameUtils.toValueName(context.tagNameCandidate.map(_.show).getOrElse("it"))
 
   inline override def beforeNode(using
       cache: StatementsCache
@@ -153,6 +153,18 @@ class XmlWriterMacroVisitor extends TypeTreeVisitor {
           )
         }
     }
+  }
+
+  inline override def visitPrimitive(using
+      cache: StatementsCache
+  )(
+      tpe: cache.quotes.reflect.TypeRepr,
+      valueTerm: cache.quotes.reflect.Term,
+      context: Context
+  ): Unit = {
+    if !context.hasTag then context.builder.appendElementStart(context.tagNameOr(tpe))
+    context.builder.appendText(valueTerm)
+    if !context.hasTag then context.builder.appendElementEnd(context.tagNameOr(tpe))
   }
 
   inline override def visitAsString(using
