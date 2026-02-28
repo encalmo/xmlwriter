@@ -49,7 +49,13 @@ class XmlWriterMacroVisitor extends TypeTreeVisitor {
 
   inline override def beforeNode(using
       cache: StatementsCache
-  )(annotations: Set[AnnotationInfo], context: XmlWriterMacroContext): (XmlWriterMacroContext, Set[AnnotationInfo]) = {
+  )(
+      tpe: cache.quotes.reflect.TypeRepr,
+      valueTerm: cache.quotes.reflect.Term,
+      annotations: Set[AnnotationInfo],
+      isCollectionItem: Boolean,
+      context: Context
+  ): (XmlWriterMacroContext, Set[AnnotationInfo]) = {
     given cache.quotes.type = cache.quotes
 
     val tagNameCandidate2: Option[TagName] =

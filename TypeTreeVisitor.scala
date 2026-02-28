@@ -18,7 +18,13 @@ trait TypeTreeVisitor {
   /** Before visiting a node in the type tree. */
   def beforeNode(using
       cache: StatementsCache
-  )(annotations: Set[AnnotationInfo], context: Context): (Context, Set[AnnotationInfo])
+  )(
+      tpe: cache.quotes.reflect.TypeRepr,
+      valueTerm: cache.quotes.reflect.Term,
+      annotations: Set[AnnotationInfo],
+      isCollectionItem: Boolean,
+      context: Context
+  ): (Context, Set[AnnotationInfo])
 
   /** After visiting a node in the type tree. */
   def afterNode(using cache: StatementsCache)(annotations: Set[AnnotationInfo], context: Context): Unit

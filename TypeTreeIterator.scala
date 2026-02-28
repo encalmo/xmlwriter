@@ -65,7 +65,14 @@ object TypeTreeIterator {
     val valueAnnotations = getValueAnnotations(valueTerm)
     val allAnnotations = typeAnnotations ++ valueAnnotations ++ annotations
 
-    val (context2, currentAnnotations) = visitor.beforeNode(allAnnotations, context)
+    val (context2, currentAnnotations) =
+      visitor.beforeNode(
+        tpe = tpe,
+        valueTerm = valueTerm,
+        annotations = allAnnotations,
+        isCollectionItem = isCollectionItem,
+        context = context
+      )
 
     if (debugIndent >= 0) then
       trace.append(
