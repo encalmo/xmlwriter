@@ -60,6 +60,8 @@ object XmlWriterMacro {
     cache.asTerm.asExprOf[Unit]
   }
 
+  val visitor: XmlWriterMacroVisitor = new XmlWriterMacroVisitor()
+
   /** Entry method to write the value of any type to the XML output using TypeTreeIterator and StatementsCache. */
   def writeUsingTypeTreeIterator[A: Type](
       tagNameCandidate: Option[TagName],
@@ -81,8 +83,6 @@ object XmlWriterMacro {
     val trace = scala.collection.mutable.Buffer.empty[String]
     val annotations = getValueAnnotations(valueTerm)
 
-    given visitor: XmlWriterMacroVisitor = new XmlWriterMacroVisitor()
-
     val tpe = TypeRepr.of[A]
 
     if tpe.typeSymbol.isTypeParam then
@@ -95,7 +95,7 @@ object XmlWriterMacro {
       """
       )
     else {
-      TypeTreeIterator.visitNode(
+      TypeTreeIterator.visitNode(using cache, visitor)(
         tpe = TypeRepr.of[A],
         valueTerm = valueTerm,
         context = XmlWriterMacroContext(tagNameCandidate = tagNameCandidate, builder = builder, hasTag = false),

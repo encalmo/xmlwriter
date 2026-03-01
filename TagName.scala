@@ -33,14 +33,10 @@ extension (tagNameCandidate: Option[TagName]) {
     import cache.quotes.reflect.*
     tagNameCandidate match {
       case Some(string: String) =>
-        OptionUtils.wrapInSome(TypeRepr.of[String], Literal(StringConstant(string)), Literal(StringConstant(string)))
+        OptionUtils.some(TypeRepr.of[String], Literal(StringConstant(string)))
 
       case Some(tagName) =>
-        OptionUtils.wrapInSome(
-          TypeRepr.of[String],
-          tagName.asInstanceOf[DynamicTagName](using cache),
-          tagName.asInstanceOf[DynamicTagName](using cache)
-        )
+        OptionUtils.some(TypeRepr.of[String], tagName.asInstanceOf[DynamicTagName](using cache))
 
       case None => OptionUtils.none
     }
