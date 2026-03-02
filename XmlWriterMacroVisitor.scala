@@ -40,7 +40,7 @@ case class XmlWriterMacroContext(
   inline override def toString: String = s"${tagNameCandidate.map(_.toString).getOrElse("<undefined>")} hasTag=$hasTag"
 }
 
-class XmlWriterMacroVisitor extends TypeTreeVisitor {
+object XmlWriterMacroVisitor extends TypeTreeVisitor {
 
   type Context = XmlWriterMacroContext
 
@@ -901,9 +901,6 @@ class XmlWriterMacroVisitor extends TypeTreeVisitor {
   ): Unit = {
     if !context.hasTag then context.builder.appendElementEnd(context.tagNameOr(tpe))
   }
-}
-
-object XmlWriterMacroVisitor {
 
   /** Builder method names. */
   object Builder {
