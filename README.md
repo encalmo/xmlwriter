@@ -243,17 +243,17 @@ println(xml)
 ## Dependencies
 
    - [Scala](https://www.scala-lang.org) >= 3.7.4
-   - org.encalmo [**macro-utils** 0.11.0](https://central.sonatype.com/artifact/org.encalmo/macro-utils_3)
+   - org.encalmo [**macro-utils** 0.13.0](https://central.sonatype.com/artifact/org.encalmo/macro-utils_3)
 
 ## Usage
 
 Use with SBT
 
-    libraryDependencies += "org.encalmo" %% "xmlwriter" % "0.13.0"
+    libraryDependencies += "org.encalmo" %% "xmlwriter" % "0.14.0"
 
 or with SCALA-CLI
 
-    //> using dep org.encalmo::xmlwriter:0.13.0
+    //> using dep org.encalmo::xmlwriter:0.14.0
 
 ## More examples
 
