@@ -372,15 +372,18 @@ object TypeTreeIterator {
     val context2 = visitor.beforeCaseClass(tpe, valueTerm, annotations, context)
 
     cache.putMethodCallOf[Unit](
-      createMethodName("CaseClass", tpe, annotations),
-      List(valueNameOf(tpe)),
-      List(tpe),
-      List(valueTerm),
-      (nested: StatementsCache) ?=>
+      methodName = createMethodName("CaseClass", tpe, annotations),
+      parameterNames = List(valueNameOf(tpe)),
+      parameterTypes = List(tpe),
+      parameters = List(valueTerm),
+      minMethodLinesCount = 6,
+      buildMethodBody = (nested: StatementsCache) ?=>
         (arguments: List[Tree]) =>
           given nested.quotes.type = nested.quotes
-          val entity = nested.quotes.reflect.Ref(arguments.head.asInstanceOf[nested.quotes.reflect.Tree].symbol)
-
+          val entity = arguments.head match {
+            case term: Term => term.toTerm
+            case tree: Tree => nested.quotes.reflect.Ref(tree.symbol.asInstanceOf[nested.quotes.reflect.Symbol])
+          }
           CaseClassUtils.visit(
             tpe = tpe.toTypeRepr,
             valueTerm = entity,
@@ -429,7 +432,10 @@ object TypeTreeIterator {
       (cache: StatementsCache) ?=>
         (arguments: List[Tree]) =>
           given cache.quotes.type = cache.quotes
-          val entity = cache.quotes.reflect.Ref(arguments.head.asInstanceOf[cache.quotes.reflect.Tree].symbol)
+          val entity = arguments.head match {
+            case term: Term => term.toTerm
+            case tree: Tree => cache.quotes.reflect.Ref(tree.symbol.asInstanceOf[cache.quotes.reflect.Symbol])
+          }
 
           cache.put(
             EnumUtils.transformToMatchTerm(
@@ -494,9 +500,10 @@ object TypeTreeIterator {
       List(valueTerm),
       (cache: StatementsCache) ?=>
         (arguments: List[Tree]) => {
-          val entity = cache.quotes.reflect
-            .Ref(arguments.head.asInstanceOf[cache.quotes.reflect.Tree].symbol)
-
+          val entity = arguments.head match {
+            case term: Term => term.toTerm
+            case tree: Tree => cache.quotes.reflect.Ref(tree.symbol.asInstanceOf[cache.quotes.reflect.Symbol])
+          }
           cache.put(
             UnionUtils.transformToMatchTerm(
               tpe.toTypeRepr,
@@ -903,9 +910,10 @@ object TypeTreeIterator {
       (nested: StatementsCache) ?=>
         (arguments: List[Tree]) =>
           given nested.quotes.type = nested.quotes
-          val entity = nested.quotes.reflect
-            .Ref(arguments.head.asInstanceOf[nested.quotes.reflect.Tree].symbol)
-
+          val entity = arguments.head match {
+            case term: Term => term.toTerm
+            case tree: Tree => cache.quotes.reflect.Ref(tree.symbol.asInstanceOf[cache.quotes.reflect.Symbol])
+          }
           SelectableUtils.visitFields(
             fieldsTpe = fields.toTypeRepr,
             valueTerm = entity.toTerm,
@@ -951,12 +959,13 @@ object TypeTreeIterator {
       (nested: StatementsCache) ?=>
         (arguments: List[Tree]) =>
           given nested.quotes.type = nested.quotes
-          val entity = nested.quotes.reflect
-            .Ref(arguments.head.asInstanceOf[nested.quotes.reflect.Tree].symbol)
-
+          val entity = arguments.head match {
+            case term: Term => term.toTerm
+            case tree: Tree => nested.quotes.reflect.Ref(tree.symbol.asInstanceOf[nested.quotes.reflect.Symbol])
+          }
           JavaRecordUtils.visit(
             tpe = tpe.toTypeRepr,
-            valueTerm = entity,
+            valueTerm = entity.toTerm,
             functionOnField = { (tpe, name, valueTerm) =>
               visitor.visitJavaRecordField(
                 tpe = tpe,
@@ -1018,7 +1027,11 @@ object TypeTreeIterator {
   inline def createMethodName(using
       cache: StatementsCache
   )(inline name: String, tpe: cache.quotes.reflect.TypeRepr, annotations: Set[AnnotationInfo]): String = {
-    "visit" + name + "_" + underscored(tpe.show(using cache.quotes.reflect.Printer.TypeReprCode))
+    "visit" + name + "_" + TypeNameUtils
+      .underscored(tpe.show(using cache.quotes.reflect.Printer.TypeReprCode))
+      .replace("[", "__")
+      .replace("]", "")
+      .replace(",", "__")
       + annotations.hash(_.contains(".xml")).replace("-", "")
   }
 }

@@ -1,6 +1,6 @@
 //> using scala 3.7.4
 //> using exclude scripts
-//> using dep org.encalmo::macro-utils:0.11.0
+//> using dep org.encalmo::macro-utils:0.13.0
 //> using test.dep org.scalameta::munit:1.2.3
 //> using publish.organization "org.encalmo"
 //> using publish.name "xmlwriter"
