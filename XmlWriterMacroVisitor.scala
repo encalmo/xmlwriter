@@ -480,6 +480,7 @@ object XmlWriterMacroVisitor extends TypeTreeVisitor {
   )(
       tpe: cache.quotes.reflect.TypeRepr,
       valueTerm: cache.quotes.reflect.Term,
+      indexTerm: cache.quotes.reflect.Term,
       annotations: Set[AnnotationInfo],
       context: Context,
       visitNode: VisitNodeFunction
@@ -531,11 +532,12 @@ object XmlWriterMacroVisitor extends TypeTreeVisitor {
   )(
       tpe: cache.quotes.reflect.TypeRepr,
       valueTerm: cache.quotes.reflect.Term,
+      indexTerm: cache.quotes.reflect.Term,
       annotations: Set[AnnotationInfo],
       context: Context,
       visitNode: VisitNodeFunction
   ): Unit =
-    visitCollectionItem(tpe, valueTerm, annotations, context, visitNode)
+    visitCollectionItem(tpe, valueTerm, indexTerm, annotations, context, visitNode)
 
   inline override def afterArray(using
       cache: StatementsCache
@@ -566,6 +568,7 @@ object XmlWriterMacroVisitor extends TypeTreeVisitor {
   )(
       tpe: cache.quotes.reflect.TypeRepr,
       valueTerm: cache.quotes.reflect.Term,
+      indexTerm: cache.quotes.reflect.Term,
       annotations: Set[AnnotationInfo],
       context: Context,
       visitNode: VisitNodeFunction
@@ -751,11 +754,12 @@ object XmlWriterMacroVisitor extends TypeTreeVisitor {
   )(
       tpe: cache.quotes.reflect.TypeRepr,
       valueTerm: cache.quotes.reflect.Term,
+      indexTerm: cache.quotes.reflect.Term,
       annotations: Set[AnnotationInfo],
       context: Context,
       visitNode: VisitNodeFunction
   ): Unit =
-    visitCollectionItem(tpe, valueTerm, annotations, context, visitNode)
+    visitCollectionItem(tpe, valueTerm, indexTerm, annotations, context, visitNode)
 
   inline override def afterJavaIterable(using
       cache: StatementsCache

@@ -644,11 +644,12 @@ object TypeTreeIterator {
         visitor.createVariableNamePrefix(context),
         itemTpe.toTypeRepr,
         valueTerm,
-        functionOnItem = { (tpe, valueTerm) =>
+        functionOnItem = { (tpe, valueTerm, indexTerm) =>
           block {
             visitor.visitCollectionItem(
               tpe = tpe.toTypeRepr,
               valueTerm = valueTerm.toTerm,
+              indexTerm = indexTerm.toTerm,
               annotations = annotations,
               context = context2,
               visitNode = visitNodeFunction(trace, debugIndent + 1)
@@ -682,11 +683,12 @@ object TypeTreeIterator {
         visitor.createVariableNamePrefix(context),
         itemTpe.toTypeRepr,
         valueTerm.toTerm,
-        functionOnItem = { (tpe, valueTerm) =>
+        functionOnItem = { (tpe, valueTerm, indexTerm) =>
           block {
             visitor.visitArrayItem(
               tpe = tpe.toTypeRepr,
               valueTerm = valueTerm.toTerm,
+              indexTerm = indexTerm.toTerm,
               annotations = annotations,
               context = context2,
               visitNode = visitNodeFunction(trace, debugIndent + 1)
@@ -760,11 +762,12 @@ object TypeTreeIterator {
         visitor.createVariableNamePrefix(context),
         itemTpe.toTypeRepr,
         valueTerm,
-        functionOnItem = { (tpe, valueTerm) =>
+        functionOnItem = { (tpe, valueTerm, indexTerm) =>
           block {
             visitor.visitJavaIterableItem(
               tpe = tpe.toTypeRepr,
               valueTerm = valueTerm.toTerm,
+              indexTerm = indexTerm.toTerm,
               annotations = annotations,
               context = context2,
               visitNode = visitNodeFunction(trace, debugIndent + 1)
@@ -830,6 +833,7 @@ object TypeTreeIterator {
       annotations: Set[AnnotationInfo],
       debugIndent: Int
   ): Unit = {
+    import cache.quotes.reflect.*
     debug(trace, debugIndent, tpe, "visitTuple")
 
     val context2 = visitor.beforeTuple(tpe, valueTerm, annotations, context)
@@ -840,6 +844,7 @@ object TypeTreeIterator {
         visitor.visitTupleItem(
           tpe = tpe.toTypeRepr,
           valueTerm = valueTerm,
+          indexTerm = Literal(IntConstant(index)),
           annotations = annotations,
           context = context2,
           visitNode = visitNodeFunction(trace, debugIndent + 1)

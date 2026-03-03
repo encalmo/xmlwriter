@@ -217,6 +217,7 @@ trait TypeTreeVisitor {
   )(
       tpe: cache.quotes.reflect.TypeRepr,
       valueTerm: cache.quotes.reflect.Term,
+      indexTerm: cache.quotes.reflect.Term,
       annotations: Set[AnnotationInfo],
       context: Context,
       visitNode: VisitNodeFunction
@@ -247,6 +248,7 @@ trait TypeTreeVisitor {
   )(
       tpe: cache.quotes.reflect.TypeRepr,
       valueTerm: cache.quotes.reflect.Term,
+      indexTerm: cache.quotes.reflect.Term,
       annotations: Set[AnnotationInfo],
       context: Context,
       visitNode: VisitNodeFunction
@@ -276,6 +278,7 @@ trait TypeTreeVisitor {
   )(
       tpe: cache.quotes.reflect.TypeRepr,
       valueTerm: cache.quotes.reflect.Term,
+      indexTerm: cache.quotes.reflect.Term,
       annotations: Set[AnnotationInfo],
       context: Context,
       visitNode: VisitNodeFunction
@@ -397,6 +400,7 @@ trait TypeTreeVisitor {
   )(
       tpe: cache.quotes.reflect.TypeRepr,
       valueTerm: cache.quotes.reflect.Term,
+      indexTerm: cache.quotes.reflect.Term,
       annotations: Set[AnnotationInfo],
       context: Context,
       visitNode: VisitNodeFunction
