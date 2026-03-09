@@ -11,12 +11,13 @@ import org.encalmo.utils.StatementsCache.*
 import org.encalmo.utils.StringUtils
 import org.encalmo.utils.TupleUtils
 import org.encalmo.utils.TypeTreeVisitor
-import org.encalmo.utils.VisitNodeFunction
+import org.encalmo.utils.TypeTreeIterator.VisitNodeFunction
 
 import scala.quoted.Expr
 import org.encalmo.utils.TypeNameUtils
 import org.encalmo.utils.TagName
 import org.encalmo.utils.{show, resolve}
+import org.encalmo.utils.TypeTreeIterator
 
 case class XmlWriterMacroContext(
     tagNameCandidate: Option[TagName],
@@ -98,7 +99,7 @@ object XmlWriterMacroVisitor extends TypeTreeVisitor {
       annotations: Set[AnnotationInfo],
       isCollectionItem: Boolean,
       context: XmlWriterMacroContext,
-      visitNode: VisitNodeFunction
+      visitNode: TypeTreeIterator.VisitNodeFunction
   ): Option[Unit] = {
     given cache.quotes.type = cache.quotes
     import cache.quotes.reflect.*
@@ -242,7 +243,7 @@ object XmlWriterMacroVisitor extends TypeTreeVisitor {
       valueTerm: cache.quotes.reflect.Term,
       annotations: Set[AnnotationInfo],
       context: Context,
-      visitNode: VisitNodeFunction
+      visitNode: TypeTreeIterator.VisitNodeFunction
   ): Unit = {
     given cache.quotes.type = cache.quotes
 
@@ -294,7 +295,7 @@ object XmlWriterMacroVisitor extends TypeTreeVisitor {
       annotations: Set[AnnotationInfo],
       isCollectionItem: Boolean,
       context: Context,
-      visitNode: VisitNodeFunction
+      visitNode: TypeTreeIterator.VisitNodeFunction
   ): Unit = {
     given cache.quotes.type = cache.quotes
 
@@ -342,7 +343,7 @@ object XmlWriterMacroVisitor extends TypeTreeVisitor {
       annotations: Set[AnnotationInfo],
       isCollectionItem: Boolean,
       context: Context,
-      visitNode: VisitNodeFunction
+      visitNode: TypeTreeIterator.VisitNodeFunction
   ): Unit = {
     if !context.hasTag then context.builder.appendElementStart(context.tagNameOr(tpe))
     visitNode(using cache, this)(
@@ -370,7 +371,7 @@ object XmlWriterMacroVisitor extends TypeTreeVisitor {
       annotations: Set[AnnotationInfo],
       isCollectionItem: Boolean,
       context: Context,
-      visitNode: VisitNodeFunction
+      visitNode: TypeTreeIterator.VisitNodeFunction
   ): Unit = {
     visitNode(using cache, this)(
       tpe = tpe,
@@ -398,7 +399,7 @@ object XmlWriterMacroVisitor extends TypeTreeVisitor {
       annotations: Set[AnnotationInfo],
       isCollectionItem: Boolean,
       context: Context,
-      visitNode: VisitNodeFunction
+      visitNode: TypeTreeIterator.VisitNodeFunction
   ): Unit = {
     visitNode(using cache, this)(
       tpe = tpe,
@@ -417,7 +418,7 @@ object XmlWriterMacroVisitor extends TypeTreeVisitor {
       annotations: Set[AnnotationInfo],
       isCollectionItem: Boolean,
       context: Context,
-      visitNode: VisitNodeFunction
+      visitNode: TypeTreeIterator.VisitNodeFunction
   ): Unit = {
     visitNode(using cache, this)(
       tpe = tpe,
@@ -437,7 +438,7 @@ object XmlWriterMacroVisitor extends TypeTreeVisitor {
       annotations: Set[AnnotationInfo],
       isCollectionItem: Boolean,
       context: Context,
-      visitNode: VisitNodeFunction
+      visitNode: TypeTreeIterator.VisitNodeFunction
   ): Unit = {
     given cache.quotes.type = cache.quotes
     upperBoundTpe match {
@@ -483,7 +484,7 @@ object XmlWriterMacroVisitor extends TypeTreeVisitor {
       indexTerm: cache.quotes.reflect.Term,
       annotations: Set[AnnotationInfo],
       context: Context,
-      visitNode: VisitNodeFunction
+      visitNode: TypeTreeIterator.VisitNodeFunction
   ): Unit = {
     given cache.quotes.type = cache.quotes
     // get the name of the item tag from the annotation or default to the type name
@@ -535,7 +536,7 @@ object XmlWriterMacroVisitor extends TypeTreeVisitor {
       indexTerm: cache.quotes.reflect.Term,
       annotations: Set[AnnotationInfo],
       context: Context,
-      visitNode: VisitNodeFunction
+      visitNode: TypeTreeIterator.VisitNodeFunction
   ): Unit =
     visitCollectionItem(tpe, valueTerm, indexTerm, annotations, context, visitNode)
 
@@ -571,7 +572,7 @@ object XmlWriterMacroVisitor extends TypeTreeVisitor {
       indexTerm: cache.quotes.reflect.Term,
       annotations: Set[AnnotationInfo],
       context: Context,
-      visitNode: VisitNodeFunction
+      visitNode: TypeTreeIterator.VisitNodeFunction
   ): Unit = {
     given cache.quotes.type = cache.quotes
     val additionalItemTag = annotations.getString[annotation.xmlAdditionalItemTag](parameter = "name")
@@ -628,7 +629,7 @@ object XmlWriterMacroVisitor extends TypeTreeVisitor {
       valueTerm: cache.quotes.reflect.Term,
       annotations: Set[AnnotationInfo],
       context: Context,
-      visitNode: VisitNodeFunction
+      visitNode: TypeTreeIterator.VisitNodeFunction
   ): Unit = {
     given cache.quotes.type = cache.quotes
     visitNode(using cache, this)(
@@ -670,7 +671,7 @@ object XmlWriterMacroVisitor extends TypeTreeVisitor {
       valueTerm: cache.quotes.reflect.Term,
       annotations: Set[AnnotationInfo],
       context: Context,
-      visitNode: VisitNodeFunction
+      visitNode: TypeTreeIterator.VisitNodeFunction
   ): Unit = {
     visitNode(using cache, this)(
       tpe = tpe,
@@ -714,7 +715,7 @@ object XmlWriterMacroVisitor extends TypeTreeVisitor {
       annotations: Set[AnnotationInfo],
       isCollectionItem: Boolean,
       context: Context,
-      visitNode: VisitNodeFunction
+      visitNode: TypeTreeIterator.VisitNodeFunction
   ): Unit = {
     given cache.quotes.type = cache.quotes
     visitNode(using cache, this)(
@@ -757,7 +758,7 @@ object XmlWriterMacroVisitor extends TypeTreeVisitor {
       indexTerm: cache.quotes.reflect.Term,
       annotations: Set[AnnotationInfo],
       context: Context,
-      visitNode: VisitNodeFunction
+      visitNode: TypeTreeIterator.VisitNodeFunction
   ): Unit =
     visitCollectionItem(tpe, valueTerm, indexTerm, annotations, context, visitNode)
 
@@ -795,7 +796,7 @@ object XmlWriterMacroVisitor extends TypeTreeVisitor {
       valueTerm: cache.quotes.reflect.Term,
       annotations: Set[AnnotationInfo],
       context: Context,
-      visitNode: VisitNodeFunction
+      visitNode: TypeTreeIterator.VisitNodeFunction
   ): Unit = {
     given cache.quotes.type = cache.quotes
     visitNode(using cache, this)(
@@ -842,7 +843,7 @@ object XmlWriterMacroVisitor extends TypeTreeVisitor {
       valueTerm: cache.quotes.reflect.Term,
       annotations: Set[AnnotationInfo],
       context: Context,
-      visitNode: VisitNodeFunction
+      visitNode: TypeTreeIterator.VisitNodeFunction
   ): Unit = {
     visitNode(using cache, this)(
       tpe = tpe.toTypeRepr,
@@ -886,7 +887,7 @@ object XmlWriterMacroVisitor extends TypeTreeVisitor {
       valueTerm: cache.quotes.reflect.Term,
       annotations: Set[AnnotationInfo],
       context: Context,
-      visitNode: VisitNodeFunction
+      visitNode: TypeTreeIterator.VisitNodeFunction
   ): Unit = {
     visitNode(using cache, this)(
       tpe = tpe,
@@ -926,14 +927,17 @@ object XmlWriterMacroVisitor extends TypeTreeVisitor {
       val builderTpe = TypeRepr.of[XmlOutputBuilder]
       cache.getSymbol(
         Builder.AppendElementStartSymbol,
-        MethodUtils.findMethodByArity(builderTpe, "appendElementStart", 1)
+        MethodUtils.findMethodByArity(builderTpe, "appendElementStart", 1).get
       )
       cache.getSymbol(
         Builder.AppendElementStartWithAttributesSymbol,
-        MethodUtils.findMethodByArity(builderTpe, "appendElementStart", 2)
+        MethodUtils.findMethodByArity(builderTpe, "appendElementStart", 2).get
       )
-      cache.getSymbol(Builder.AppendTextSymbol, MethodUtils.findMethodByArity(builderTpe, "appendText", 1))
-      cache.getSymbol(Builder.AppendElementEndSymbol, MethodUtils.findMethodByArity(builderTpe, "appendElementEnd", 1))
+      cache.getSymbol(Builder.AppendTextSymbol, MethodUtils.findMethodByArity(builderTpe, "appendText", 1).get)
+      cache.getSymbol(
+        Builder.AppendElementEndSymbol,
+        MethodUtils.findMethodByArity(builderTpe, "appendElementEnd", 1).get
+      )
     }
 
     inline def appendElementStart(using
