@@ -15,6 +15,10 @@ Macro-powered fast and easy XML serialization library for Scala 3.
 - [How do we tag elements?](#how-do-we-tag-elements?)
    - [Root element tag](#root-element-tag)
 - [Nested elements](#nested-elements)
+- [Output types: String, Streaming, and Document](#output-types:-string,-streaming,-and-document)
+   - [1. String Output](#1.-string-output)
+   - [2. Streaming Output](#2.-streaming-output)
+   - [3. Document Output (DOM)](#3.-document-output-(dom))
 - [Dependencies](#dependencies)
 - [Usage](#usage)
 - [More examples](#more-examples)
@@ -293,7 +297,7 @@ Choose the output option that matches your workflow—converting between them is
 ## Dependencies
 
    - [Scala](https://www.scala-lang.org) >= 3.7.4
-   - org.encalmo [**type-tree-visitor** 0.9.0](https://central.sonatype.com/artifact/org.encalmo/type-tree-visitor_3)
+   - org.encalmo [**type-tree-visitor** 0.10.0](https://central.sonatype.com/artifact/org.encalmo/type-tree-visitor_3)
 
 ## Usage
 
@@ -488,6 +492,7 @@ Output:
 ├── TestData.test.scala
 ├── TestModel.test.scala
 ├── XmlOutputBuilder.scala
+├── XmlUtils.scala
 ├── XmlWriter.scala
 ├── XmlWriterMacro.scala
 ├── XmlWriterMacroVisitor.scala
