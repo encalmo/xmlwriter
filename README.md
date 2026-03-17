@@ -303,11 +303,11 @@ Choose the output option that matches your workflow—converting between them is
 
 Use with SBT
 
-    libraryDependencies += "org.encalmo" %% "xmlwriter" % "0.16.0"
+    libraryDependencies += "org.encalmo" %% "xmlwriter" % "0.17.0"
 
 or with SCALA-CLI
 
-    //> using dep org.encalmo::xmlwriter:0.16.0
+    //> using dep org.encalmo::xmlwriter:0.17.0
 
 ## More examples
 
