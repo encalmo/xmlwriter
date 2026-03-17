@@ -104,6 +104,9 @@ object XmlOutputBuilder {
       override def transformAttributeName(name: String): String = attributeNameTransformation(name)
     }
 
+  def document(): DocumentOutputBuilder =
+    new DocumentOutputBuilder()
+
   /** Builder of indented XML output. */
   class IndentedXmlStringBuilder(indentation: Int, initialString: String) extends XmlOutputBuilder {
 
@@ -351,6 +354,49 @@ object XmlOutputBuilder {
       writer.write(escapeTextForElement(text))
 
     final def result: Unit = writer.flush()
+  }
+
+  import javax.xml.parsers.DocumentBuilderFactory
+
+  class DocumentOutputBuilder extends XmlOutputBuilder {
+
+    type Result = org.w3c.dom.Document
+
+    private val document = {
+      val factory = DocumentBuilderFactory.newInstance();
+      val builder = factory.newDocumentBuilder();
+      builder.newDocument();
+    }
+
+    val stack = scala.collection.mutable.Stack.empty[org.w3c.dom.Node]
+    stack.push(document)
+
+    final override def appendElementStart(name: String): Unit = {
+      val node = document.createElement(name)
+      stack.head.appendChild(node)
+      stack.push(node)
+    }
+
+    final override def appendElementStart(name: String, attributes: Iterable[(String, String)]): Unit = {
+      val node = document.createElement(name)
+      attributes.foreach { case (key, value) =>
+        val attribute = document.createAttribute(key)
+        attribute.setValue(value)
+        node.setAttributeNode(attribute)
+      }
+      stack.head.appendChild(node)
+      stack.push(node)
+    }
+
+    final override def appendElementEnd(name: String): Unit =
+      stack.pop()
+
+    final override def appendText(text: String): Unit = {
+      val node = document.createTextNode(text)
+      stack.head.appendChild(node)
+    }
+
+    final override def result: org.w3c.dom.Document = document
   }
 
 }

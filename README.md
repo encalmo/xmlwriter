@@ -240,6 +240,56 @@ println(xml)
 </ToolBox>
 ```
 
+## Output types: String, Streaming, and Document
+
+`xmlwriter` supports a variety of output types to fit different production and integration needs. You can serialize to:
+
+### 1. String Output
+
+The default for most APIs. Methods like `XmlWriter.writeIndented` and `XmlWriter.writeCompact` return the XML as a `String` for easy inspection, logging, or further in-memory processing.
+
+```scala
+val xml: String = XmlWriter.writeIndented(entity)
+```
+
+### 2. Streaming Output
+
+For efficient and memory-safe writing of large or unknown-size documents, you can direct output straight to an `OutputStream` (e.g., file, network socket):
+
+```scala
+import java.io.FileOutputStream
+
+val out = new FileOutputStream("output.xml")
+XmlWriter.streamIndented(entity, out, addXmlDeclaration = true)
+out.close()
+```
+or for compact (single-line) XML:
+
+```scala
+XmlWriter.streamCompact(entity, out, addXmlDeclaration = false)
+```
+
+### 3. Document Output (DOM)
+
+For integration with Java XML tools or advanced in-memory XML manipulation, you can serialize to a `org.w3c.dom.Document`:
+
+```scala
+val document: org.w3c.dom.Document = XmlWriter.writeToDocument(entity)
+```
+
+This DOM-based output allows you to use the rich Java XML ecosystem for further processing, validation, or transformation (for example, using XPath or XSLT).
+
+**Summary Table:**
+
+| Output Type | Use Case                                         | Example API                          |
+|:------------|:-------------------------------------------------|:-------------------------------------|
+| `String`    | Quick serialization, logs, tests, small data     | `XmlWriter.writeIndented(entity)`    |
+| Stream      | Large data, file/network/stream, low memory      | `XmlWriter.streamIndented(...)`      |
+| Document    | Java/Scala XML interop, DOM manipulation         | `XmlWriter.writeToDocument(entity)`  |
+
+Choose the output option that matches your workflow—converting between them is possible, but choosing the most direct is typically more efficient.
+
+
 ## Dependencies
 
    - [Scala](https://www.scala-lang.org) >= 3.7.4

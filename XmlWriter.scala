@@ -220,4 +220,25 @@ object XmlWriter {
     builder.result
   }
 
+  inline def writeDocument[T](
+      value: T
+  ): org.w3c.dom.Document = {
+    given builder: XmlOutputBuilder.DocumentOutputBuilder =
+      XmlOutputBuilder.document()
+
+    XmlWriterMacro.write[T](value)
+    builder.result
+  }
+
+  inline def writeDocumentUsingRootTagName[T](
+      rootTagName: String,
+      value: T
+  ): org.w3c.dom.Document = {
+    given builder: XmlOutputBuilder.DocumentOutputBuilder =
+      XmlOutputBuilder.document()
+
+    XmlWriterMacro.write[T](rootTagName, value)
+    builder.result
+  }
+
 }

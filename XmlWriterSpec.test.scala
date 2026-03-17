@@ -1463,6 +1463,115 @@ class XmlWriterSpec extends munit.FunSuite {
     )
   }
 
+  test("write Person case class using document writer") {
+    val entity = TestData.person
+    val xml = XmlWriter.writeDocument(entity)
+    val xmlString = XmlUtils.toXmlString(xml)
+    println(xmlString)
+
+    assertEquals(
+      xmlString,
+      """|<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+         |<Person ID="1234567890">
+         |  <name>John Doe</name>
+         |  <age>30</age>
+         |  <stature>188.8</stature>
+         |  <email>john.doe@example.com</email>
+         |  <address>
+         |    <street>123 &lt;Main&gt; St</street>
+         |    <city>&amp;Anytown</city>
+         |    <zipcode>12345</zipcode>
+         |  </address>
+         |  <addresses>
+         |    <home>
+         |      <street>123 &lt;Main&gt; St</street>
+         |      <city>&amp;Anytown</city>
+         |      <zipcode>12345</zipcode>
+         |    </home>
+         |    <work>
+         |      <street>456 &lt;Main&gt; St</street>
+         |      <city>&amp;Anytown</city>
+         |      <zipcode>12345</zipcode>
+         |    </work>
+         |  </addresses>
+         |  <isStudent>false</isStudent>
+         |  <tags>
+         |    <tag name="tag1&quot;">value1</tag>
+         |    <tag name="&lt;tag2&gt;">value2</tag>
+         |  </tags>
+         |  <citizenship>United Kingdom</citizenship>
+         |  <current-immigration-status>permanent resident</current-immigration-status>
+         |  <immigration-status-valid-until>2026-01-01</immigration-status-valid-until>
+         |  <marital>
+         |    <Single/>
+         |    <Married>
+         |      <partnerName>Jane Doe</partnerName>
+         |      <from>2025-01-01</from>
+         |    </Married>
+         |  </marital>
+         |  <hobbies>
+         |    <Hobby>Swimming</Hobby>
+         |    <Hobby>Cooking</Hobby>
+         |    <Hobby>Binge watching TV series</Hobby>
+         |  </hobbies>
+         |  <hobby>Playing guitar</hobby>
+         |  <passportNumber>1234567890</passportNumber>
+         |  <driverLicense expiryDate="2026-12-31">abcdefghijklm</driverLicense>
+         |  <disabilities>
+         |    <Disability>Blindness</Disability>
+         |    <Disability>Deafness</Disability>
+         |  </disabilities>
+         |  <disability>Blindness</disability>
+         |  <benefits1>
+         |    <Benefit>ChildBenefit</Benefit>
+         |    <Benefit>UniversalCredit</Benefit>
+         |  </benefits1>
+         |  <benefits2>false</benefits2>
+         |  <skills>
+         |    <skill>Java</skill>
+         |    <skill>Scala</skill>
+         |    <skill>Python</skill>
+         |  </skills>
+         |  <wallet>
+         |    <item>123</item>
+         |    <item>John Doe</item>
+         |    <item>2025-01-01</item>
+         |  </wallet>
+         |  <assets>
+         |    <Cars>Ford</Cars>
+         |    <Boats>
+         |      <boat>Brave Wave</boat>
+         |      <boat>Sharky</boat>
+         |    </Boats>
+         |    <Planes>
+         |      <Airbus>
+         |        <model>A380</model>
+         |      </Airbus>
+         |    </Planes>
+         |  </assets>
+         |  <books>
+         |    <book>
+         |      <author>Francis Scott Fitzgerald</author>
+         |      <title>The Great Gatsby</title>
+         |    </book>
+         |    <book>
+         |      <author>Harper Lee</author>
+         |      <title>To Kill a Mockingbird</title>
+         |    </book>
+         |  </books>
+         |  <bookAtDesk>
+         |    <author>A.A. Milne</author>
+         |    <title>Winnie the Pooh</title>
+         |  </bookAtDesk>
+         |  <hand1>Left hand</hand1>
+         |  <hand2>Right hand</hand2>
+         |  <status>PENDING</status>
+         |  <active>yes</active>
+         |</Person>
+         |""".stripMargin
+    )
+  }
+
   test("write ExampleLargeCaseClass case class using derived writer") {
     val entity = ExampleLargeCaseClass(
       field1 = "value1",
