@@ -256,7 +256,7 @@ println(xml)
 
 Choose the output option that matches your workflow—converting between them is possible, but choosing the most direct is typically more efficient.
 
-### 1. String Output
+### 1. String output
 
 The default for most APIs. Methods like `XmlWriter.writeIndented` and `XmlWriter.writeCompact` return the XML as a `String` for easy inspection, logging, or further in-memory processing.
 
@@ -264,7 +264,7 @@ The default for most APIs. Methods like `XmlWriter.writeIndented` and `XmlWriter
 val xml: String = XmlWriter.writeIndented(entity)
 ```
 
-### 2. Streaming Output
+### 2. Streaming output
 
 For efficient and memory-safe writing of large or unknown-size documents, you can direct output straight to an `OutputStream` (e.g., file, network socket):
 
@@ -281,7 +281,7 @@ or for compact (single-line) XML:
 XmlWriter.streamCompact(entity, out, addXmlDeclaration = false)
 ```
 
-### 3. Document Output (DOM) without namespace
+### 3. Document output (DOM) without namespace
 
 For integration with Java XML tools or advanced in-memory XML manipulation, you can serialize to a `org.w3c.dom.Document`:
 
@@ -291,7 +291,7 @@ val document: org.w3c.dom.Document = XmlWriter.writeToDocument(entity)
 
 This DOM-based output allows you to use the rich Java XML ecosystem for further processing, validation, or transformation (for example, using XPath or XSLT).
 
-### Document Output with Namespace
+### 4. Document output (DOM) with Namespace
 
 If you need to generate an XML document with a specific default namespace (e.g., for standards compliance or interoperability), use `XmlWriter.writeDocumentWithNamespace`. This creates a DOM document with the namespace applied to the root element and all descendants where appropriate.
 
@@ -331,7 +331,7 @@ This produces output like:
 </Person>
 ```
 
-### Document Output with Namespace Mapping
+### 5. Document output (DOM) with Namespace Mapping
 
 If you need to produce XML with multiple namespaces mapped to different prefixes, you can use `XmlWriter.writeDocumentWithNamespaceMapping`. This method allows you to specify a default namespace and any number of additional namespace prefixes and URIs. All child elements will use the namespace of the parent element, unless the child element gets a new namespace from the mapping.
 
