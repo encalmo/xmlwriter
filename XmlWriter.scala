@@ -38,6 +38,7 @@ object XmlWriter {
     XmlWriterMacro.write[T](name, value)
   }
 
+  /** Writes indented XML output. */
   inline def writeIndented[T](
       value: T,
       addXmlDeclaration: Boolean = true
@@ -54,6 +55,7 @@ object XmlWriter {
     builder.result
   }
 
+  /** Writes indented XML output with tag name and attribute name transformation. */
   inline def writeIndentedWithNameTransformation[T](
       value: T,
       tagNameTransformation: String => String,
@@ -74,6 +76,7 @@ object XmlWriter {
     builder.result
   }
 
+  /** Writes indented XML output using root tag name. */
   inline def writeIndentedUsingRootTagName[T](
       rootTagName: String,
       value: T,
@@ -92,6 +95,7 @@ object XmlWriter {
     builder.result
   }
 
+  /** Streams indented XML output. */
   inline def streamIndented[T](
       value: T,
       outputStream: OutputStream,
@@ -110,6 +114,7 @@ object XmlWriter {
     builder.result
   }
 
+  /** Streams indented XML output using root tag name. */
   inline def streamIndentedUsingRootTagName[T](
       rootTagName: String,
       value: T,
@@ -130,6 +135,7 @@ object XmlWriter {
     builder.result
   }
 
+  /** Writes compact XML output. */
   inline def writeCompact[T](
       value: T,
       addXmlDeclaration: Boolean = true
@@ -146,6 +152,7 @@ object XmlWriter {
     builder.result
   }
 
+  /** Writes compact XML output with tag name and attribute name transformation. */
   inline def writeCompactWithNameTransformation[T](
       value: T,
       tagNameTransformation: String => String,
@@ -166,6 +173,7 @@ object XmlWriter {
     builder.result
   }
 
+  /** Writes compact XML output using root tag name. */
   inline def writeCompactUsingRootTagName[T](
       rootTagName: String,
       value: T,
@@ -183,6 +191,7 @@ object XmlWriter {
     builder.result
   }
 
+  /** Streams compact XML output. */
   inline def streamCompact[T](
       value: T,
       outputStream: OutputStream,
@@ -201,6 +210,7 @@ object XmlWriter {
     builder.result
   }
 
+  /** Streams compact XML output using root tag name. */
   inline def streamCompactUsingRootTagName[T](
       rootTagName: String,
       value: T,
@@ -220,6 +230,7 @@ object XmlWriter {
     builder.result
   }
 
+  /** Writes org.w3c.dom.Document output. */
   inline def writeDocument[T](
       value: T
   ): org.w3c.dom.Document = {
@@ -230,6 +241,7 @@ object XmlWriter {
     builder.result
   }
 
+  /** Writes org.w3c.dom.Document output using root tag name. */
   inline def writeDocumentUsingRootTagName[T](
       rootTagName: String,
       value: T
@@ -241,4 +253,80 @@ object XmlWriter {
     builder.result
   }
 
+  /** Writes org.w3c.dom.Document output with given namespace. */
+  inline def writeDocumentWithNamespace[T](
+      value: T,
+      namespace: String
+  ): org.w3c.dom.Document = {
+    given builder: XmlOutputBuilder.DocumentWithNamespaceOutputBuilder =
+      XmlOutputBuilder.documentWithNamespace(namespace)
+
+    XmlWriterMacro.write[T](value)
+    builder.result
+  }
+
+  /** Writes org.w3c.dom.Document output with given namespace using root tag name. */
+  inline def writeDocumentWithNamespaceUsingRootTagName[T](
+      rootTagName: String,
+      value: T,
+      namespace: String
+  ): org.w3c.dom.Document = {
+    given builder: XmlOutputBuilder.DocumentWithNamespaceOutputBuilder =
+      XmlOutputBuilder.documentWithNamespace(namespace)
+
+    XmlWriterMacro.write[T](rootTagName, value)
+    builder.result
+  }
+
+  /** Writes org.w3c.dom.Document output with namespaces derived from 'xmlns' attributes. */
+  inline def writeDocumentWithNamespaceFromAttributes[T](
+      value: T
+  ): org.w3c.dom.Document = {
+    given builder: XmlOutputBuilder.DocumentWithNamespaceFromAttrributesOutputBuilder =
+      XmlOutputBuilder.documentWithNamespaceFromAttributes()
+
+    XmlWriterMacro.write[T](value)
+    builder.result
+  }
+
+  /** Writes org.w3c.dom.Document output with namespaces derived from 'xmlns' attributes using root tag name. */
+  inline def writeDocumentWithNamespaceFromAttributesUsingRootTagName[T](
+      rootTagName: String,
+      value: T
+  ): org.w3c.dom.Document = {
+    given builder: XmlOutputBuilder.DocumentWithNamespaceFromAttrributesOutputBuilder =
+      XmlOutputBuilder.documentWithNamespaceFromAttributes()
+
+    XmlWriterMacro.write[T](rootTagName, value)
+    builder.result
+  }
+
+  /** Writes org.w3c.dom.Document output with namespaces derived from the given mapping between leading element names
+    * and their namespaces.
+    */
+  inline def writeDocumentWithNamespaceMapping[T](
+      value: T,
+      namespaces: Map[String, (String, String)]
+  ): org.w3c.dom.Document = {
+    given builder: XmlOutputBuilder.DocumentWithNamespaceMappingOutputBuilder =
+      XmlOutputBuilder.documentWithNamespaceMapping(namespaces)
+
+    XmlWriterMacro.write[T](value)
+    builder.result
+  }
+
+  /** Writes org.w3c.dom.Document output with namespaces derived from the given mapping between leading element names
+    * and their namespaces using root tag name.
+    */
+  inline def writeDocumentWithNamespaceMappingUsingRootTagName[T](
+      rootTagName: String,
+      value: T,
+      namespaces: Map[String, (String, String)]
+  ): org.w3c.dom.Document = {
+    given builder: XmlOutputBuilder.DocumentWithNamespaceMappingOutputBuilder =
+      XmlOutputBuilder.documentWithNamespaceMapping(namespaces)
+
+    XmlWriterMacro.write[T](rootTagName, value)
+    builder.result
+  }
 }

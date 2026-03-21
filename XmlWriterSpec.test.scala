@@ -1572,6 +1572,231 @@ class XmlWriterSpec extends munit.FunSuite {
     )
   }
 
+  test("write Person case class using document writer with namespace") {
+    val entity = TestData.person
+    val xml = XmlWriter.writeDocumentWithNamespace(entity, "http://example.com/person")
+    val xmlString = XmlUtils.toXmlString(xml)
+    println(xmlString)
+
+    assertEquals(
+      xmlString,
+      """|<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+         |<Person xmlns="http://example.com/person" ID="1234567890">
+         |  <name>John Doe</name>
+         |  <age>30</age>
+         |  <stature>188.8</stature>
+         |  <email>john.doe@example.com</email>
+         |  <address>
+         |    <street>123 &lt;Main&gt; St</street>
+         |    <city>&amp;Anytown</city>
+         |    <zipcode>12345</zipcode>
+         |  </address>
+         |  <addresses>
+         |    <home>
+         |      <street>123 &lt;Main&gt; St</street>
+         |      <city>&amp;Anytown</city>
+         |      <zipcode>12345</zipcode>
+         |    </home>
+         |    <work>
+         |      <street>456 &lt;Main&gt; St</street>
+         |      <city>&amp;Anytown</city>
+         |      <zipcode>12345</zipcode>
+         |    </work>
+         |  </addresses>
+         |  <isStudent>false</isStudent>
+         |  <tags>
+         |    <tag name="tag1&quot;">value1</tag>
+         |    <tag name="&lt;tag2&gt;">value2</tag>
+         |  </tags>
+         |  <citizenship>United Kingdom</citizenship>
+         |  <current-immigration-status>permanent resident</current-immigration-status>
+         |  <immigration-status-valid-until>2026-01-01</immigration-status-valid-until>
+         |  <marital>
+         |    <Single/>
+         |    <Married>
+         |      <partnerName>Jane Doe</partnerName>
+         |      <from>2025-01-01</from>
+         |    </Married>
+         |  </marital>
+         |  <hobbies>
+         |    <Hobby>Swimming</Hobby>
+         |    <Hobby>Cooking</Hobby>
+         |    <Hobby>Binge watching TV series</Hobby>
+         |  </hobbies>
+         |  <hobby>Playing guitar</hobby>
+         |  <passportNumber>1234567890</passportNumber>
+         |  <driverLicense expiryDate="2026-12-31">abcdefghijklm</driverLicense>
+         |  <disabilities>
+         |    <Disability>Blindness</Disability>
+         |    <Disability>Deafness</Disability>
+         |  </disabilities>
+         |  <disability>Blindness</disability>
+         |  <benefits1>
+         |    <Benefit>ChildBenefit</Benefit>
+         |    <Benefit>UniversalCredit</Benefit>
+         |  </benefits1>
+         |  <benefits2>false</benefits2>
+         |  <skills>
+         |    <skill>Java</skill>
+         |    <skill>Scala</skill>
+         |    <skill>Python</skill>
+         |  </skills>
+         |  <wallet>
+         |    <item>123</item>
+         |    <item>John Doe</item>
+         |    <item>2025-01-01</item>
+         |  </wallet>
+         |  <assets>
+         |    <Cars>Ford</Cars>
+         |    <Boats>
+         |      <boat>Brave Wave</boat>
+         |      <boat>Sharky</boat>
+         |    </Boats>
+         |    <Planes>
+         |      <Airbus>
+         |        <model>A380</model>
+         |      </Airbus>
+         |    </Planes>
+         |  </assets>
+         |  <books>
+         |    <book>
+         |      <author>Francis Scott Fitzgerald</author>
+         |      <title>The Great Gatsby</title>
+         |    </book>
+         |    <book>
+         |      <author>Harper Lee</author>
+         |      <title>To Kill a Mockingbird</title>
+         |    </book>
+         |  </books>
+         |  <bookAtDesk>
+         |    <author>A.A. Milne</author>
+         |    <title>Winnie the Pooh</title>
+         |  </bookAtDesk>
+         |  <hand1>Left hand</hand1>
+         |  <hand2>Right hand</hand2>
+         |  <status>PENDING</status>
+         |  <active>yes</active>
+         |</Person>
+         |""".stripMargin
+    )
+  }
+
+  test("write Person case class using document writer with namespace mapping") {
+    val entity = TestData.person
+    val xml = XmlWriter.writeDocumentWithNamespaceMapping(
+      entity,
+      Map(
+        "Person" -> ("p", "http://example.com/person"),
+        "address" -> ("a", "http://example.com/address"),
+        "book" -> ("", "http://example.com/book")
+      )
+    )
+    val xmlString = XmlUtils.toXmlString(xml)
+    println(xmlString)
+
+    assertEquals(
+      xmlString,
+      """|<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+         |<p:Person xmlns:p="http://example.com/person" xmlns="http://example.com/book" xmlns:a="http://example.com/address" ID="1234567890">
+         |  <p:name>John Doe</p:name>
+         |  <p:age>30</p:age>
+         |  <p:stature>188.8</p:stature>
+         |  <p:email>john.doe@example.com</p:email>
+         |  <a:address>
+         |    <a:street>123 &lt;Main&gt; St</a:street>
+         |    <a:city>&amp;Anytown</a:city>
+         |    <a:zipcode>12345</a:zipcode>
+         |  </a:address>
+         |  <p:addresses>
+         |    <p:home>
+         |      <p:street>123 &lt;Main&gt; St</p:street>
+         |      <p:city>&amp;Anytown</p:city>
+         |      <p:zipcode>12345</p:zipcode>
+         |    </p:home>
+         |    <p:work>
+         |      <p:street>456 &lt;Main&gt; St</p:street>
+         |      <p:city>&amp;Anytown</p:city>
+         |      <p:zipcode>12345</p:zipcode>
+         |    </p:work>
+         |  </p:addresses>
+         |  <p:isStudent>false</p:isStudent>
+         |  <p:tags>
+         |    <p:tag name="tag1&quot;">value1</p:tag>
+         |    <p:tag name="&lt;tag2&gt;">value2</p:tag>
+         |  </p:tags>
+         |  <p:citizenship>United Kingdom</p:citizenship>
+         |  <p:current-immigration-status>permanent resident</p:current-immigration-status>
+         |  <p:immigration-status-valid-until>2026-01-01</p:immigration-status-valid-until>
+         |  <p:marital>
+         |    <p:Single/>
+         |    <p:Married>
+         |      <p:partnerName>Jane Doe</p:partnerName>
+         |      <p:from>2025-01-01</p:from>
+         |    </p:Married>
+         |  </p:marital>
+         |  <p:hobbies>
+         |    <p:Hobby>Swimming</p:Hobby>
+         |    <p:Hobby>Cooking</p:Hobby>
+         |    <p:Hobby>Binge watching TV series</p:Hobby>
+         |  </p:hobbies>
+         |  <p:hobby>Playing guitar</p:hobby>
+         |  <p:passportNumber>1234567890</p:passportNumber>
+         |  <p:driverLicense expiryDate="2026-12-31">abcdefghijklm</p:driverLicense>
+         |  <p:disabilities>
+         |    <p:Disability>Blindness</p:Disability>
+         |    <p:Disability>Deafness</p:Disability>
+         |  </p:disabilities>
+         |  <p:disability>Blindness</p:disability>
+         |  <p:benefits1>
+         |    <p:Benefit>ChildBenefit</p:Benefit>
+         |    <p:Benefit>UniversalCredit</p:Benefit>
+         |  </p:benefits1>
+         |  <p:benefits2>false</p:benefits2>
+         |  <p:skills>
+         |    <p:skill>Java</p:skill>
+         |    <p:skill>Scala</p:skill>
+         |    <p:skill>Python</p:skill>
+         |  </p:skills>
+         |  <p:wallet>
+         |    <p:item>123</p:item>
+         |    <p:item>John Doe</p:item>
+         |    <p:item>2025-01-01</p:item>
+         |  </p:wallet>
+         |  <p:assets>
+         |    <p:Cars>Ford</p:Cars>
+         |    <p:Boats>
+         |      <p:boat>Brave Wave</p:boat>
+         |      <p:boat>Sharky</p:boat>
+         |    </p:Boats>
+         |    <p:Planes>
+         |      <p:Airbus>
+         |        <p:model>A380</p:model>
+         |      </p:Airbus>
+         |    </p:Planes>
+         |  </p:assets>
+         |  <p:books>
+         |    <book>
+         |      <author>Francis Scott Fitzgerald</author>
+         |      <title>The Great Gatsby</title>
+         |    </book>
+         |    <book>
+         |      <author>Harper Lee</author>
+         |      <title>To Kill a Mockingbird</title>
+         |    </book>
+         |  </p:books>
+         |  <p:bookAtDesk>
+         |    <p:author>A.A. Milne</p:author>
+         |    <p:title>Winnie the Pooh</p:title>
+         |  </p:bookAtDesk>
+         |  <p:hand1>Left hand</p:hand1>
+         |  <p:hand2>Right hand</p:hand2>
+         |  <p:status>PENDING</p:status>
+         |  <p:active>yes</p:active>
+         |</p:Person>
+         |""".stripMargin
+    )
+  }
+
   test("write ExampleLargeCaseClass case class using derived writer") {
     val entity = ExampleLargeCaseClass(
       field1 = "value1",

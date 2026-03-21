@@ -246,7 +246,13 @@ println(xml)
 
 ## Output types: String, Streaming, and Document
 
-`xmlwriter` supports a variety of output types to fit different production and integration needs. You can serialize to:
+| Output Type | Use Case                                         | Example API                          |
+|:------------|:-------------------------------------------------|:-------------------------------------|
+| `String`    | Quick serialization, logs, tests, small data     | `XmlWriter.writeIndented(entity)`    |
+| Stream      | Large data, file/network/stream, low memory      | `XmlWriter.streamIndented(...)`      |
+| Document    | Java/Scala XML interop, DOM manipulation         | `XmlWriter.writeToDocument(entity)`  |
+
+Choose the output option that matches your workflow—converting between them is possible, but choosing the most direct is typically more efficient.
 
 ### 1. String Output
 
@@ -273,7 +279,7 @@ or for compact (single-line) XML:
 XmlWriter.streamCompact(entity, out, addXmlDeclaration = false)
 ```
 
-### 3. Document Output (DOM)
+### 3. Document Output (DOM) without namespace
 
 For integration with Java XML tools or advanced in-memory XML manipulation, you can serialize to a `org.w3c.dom.Document`:
 
@@ -283,16 +289,107 @@ val document: org.w3c.dom.Document = XmlWriter.writeToDocument(entity)
 
 This DOM-based output allows you to use the rich Java XML ecosystem for further processing, validation, or transformation (for example, using XPath or XSLT).
 
-**Summary Table:**
+### Document Output with Namespace
 
-| Output Type | Use Case                                         | Example API                          |
-|:------------|:-------------------------------------------------|:-------------------------------------|
-| `String`    | Quick serialization, logs, tests, small data     | `XmlWriter.writeIndented(entity)`    |
-| Stream      | Large data, file/network/stream, low memory      | `XmlWriter.streamIndented(...)`      |
-| Document    | Java/Scala XML interop, DOM manipulation         | `XmlWriter.writeToDocument(entity)`  |
+If you need to generate an XML document with a specific default namespace (e.g., for standards compliance or interoperability), use `XmlWriter.writeDocumentWithNamespace`. This creates a DOM document with the namespace applied to the root element and all descendants where appropriate.
 
-Choose the output option that matches your workflow—converting between them is possible, but choosing the most direct is typically more efficient.
+```scala
+import org.encalmo.writer.xml.XmlWriter
 
+case class Person(
+  name: String,
+  age: Int
+  // ... other fields ...
+)
+
+val person = Person(
+  name = "John Doe",
+  age = 30
+  // ... other values ...
+)
+
+val namespace = "http://example.com/person"
+// Produce a DOM Document (org.w3c.dom.Document) with namespace
+val doc: org.w3c.dom.Document =
+  XmlWriter.writeDocumentWithNamespace(person, namespace)
+
+// To convert the document to a String for output or inspection:
+val xmlString = org.encalmo.writer.xml.XmlUtils.toXmlString(doc)
+println(xmlString)
+```
+
+This produces output like:
+
+```xml
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<Person xmlns="http://example.com/person">
+  <name>John Doe</name>
+  <age>30</age>
+  <!-- ... other fields ... -->
+</Person>
+```
+
+### Document Output with Namespace Mapping
+
+If you need to produce XML with multiple namespaces mapped to different prefixes, you can use `XmlWriter.writeDocumentWithNamespaceMapping`. This method allows you to specify a default namespace and any number of additional namespace prefixes and URIs. All child elements will use the namespace of the parent element, unless the child element gets a new namespace from the mapping.
+
+```scala
+import org.encalmo.writer.xml.XmlWriter
+import org.encalmo.writer.xml.annotation.*
+
+case class Book(
+  title: String,
+  author: String
+)
+
+case class Library(
+  @xmlAttribute libraryId: String,
+  name: String,
+  @xmlItemTag("Book") books: List[Book]
+)
+
+val library = Library(
+  libraryId = "lib123",
+  name = "City Library",
+  books = List(
+    Book("Programming Scala", "Dean Wampler"),
+    Book("Functional Programming in Scala", "Paul Chiusano")
+  )
+)
+
+val nsMapping = Map(
+  "Library" -> ("","http://example.com/library"),    // default namespace
+  "Book" -> ("bk","http://example.com/book")
+)
+
+val doc: org.w3c.dom.Document =
+  XmlWriter.writeDocumentWithNamespaceMapping(library, nsMapping)
+
+// Convert the document to a String for display or output:
+val xmlString = org.encalmo.writer.xml.XmlUtils.toXmlString(doc)
+println(xmlString)
+```
+
+This will produce output similar to:
+
+```xml
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<Library xmlns="http://example.com/library" xmlns:bk="http://example.com/book" libraryId="lib123">
+  <name>City Library</name>
+  <books>
+    <bk:Book>
+      <bk:title>Programming Scala</bk:title>
+      <bk:author>Dean Wampler</bk:author>
+    </bk:Book>
+    <bk:Book>
+      <bk:title>Functional Programming in Scala</bk:title>
+      <bk:author>Paul Chiusano</bk:author>
+    </bk:Book>
+  </books>
+</Library>
+```
+
+This approach is useful for generating XML that integrates with schemas or APIs requiring multiple namespaces, allowing you to fully control the output format.
 
 ## Dependencies
 
