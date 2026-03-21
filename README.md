@@ -20,7 +20,7 @@ Macro-powered fast and easy XML serialization library for Scala 3.
    - [2. Streaming output](#2.-streaming-output)
    - [3. Document output (DOM) without namespace](#3.-document-output-(dom)-without-namespace)
    - [4. Document output (DOM) with default namespace](#4.-document-output-(dom)-with-default-namespace)
-   - [5. Document output (DOM) with multiple naamespaces](#5.-document-output-(dom)-with-multiple-naamespaces)
+   - [5. Document output (DOM) with multiple namespaces](#5.-document-output-(dom)-with-multiple-namespaces)
 - [Dependencies](#dependencies)
 - [Usage](#usage)
 - [More examples](#more-examples)
