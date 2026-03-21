@@ -291,7 +291,7 @@ val document: org.w3c.dom.Document = XmlWriter.writeToDocument(entity)
 
 This DOM-based output allows you to use the rich Java XML ecosystem for further processing, validation, or transformation (for example, using XPath or XSLT).
 
-### 4. Document output (DOM) with Namespace
+### 4. Document output (DOM) with default namespace
 
 If you need to generate an XML document with a specific default namespace (e.g., for standards compliance or interoperability), use `XmlWriter.writeDocumentWithNamespace`. This creates a DOM document with the namespace applied to the root element and all descendants where appropriate.
 
@@ -331,7 +331,7 @@ This produces output like:
 </Person>
 ```
 
-### 5. Document output (DOM) with Namespace Mapping
+### 5. Document output (DOM) with multiple naamespaces
 
 If you need to produce XML with multiple namespaces mapped to different prefixes, you can use `XmlWriter.writeDocumentWithNamespaceMapping`. This method allows you to specify a default namespace and any number of additional namespace prefixes and URIs. All child elements will use the namespace of the parent element, unless the child element gets a new namespace from the mapping.
 
