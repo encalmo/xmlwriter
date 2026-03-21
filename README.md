@@ -331,7 +331,7 @@ This produces output like:
 </Person>
 ```
 
-### 5. Document output (DOM) with multiple naamespaces
+### 5. Document output (DOM) with multiple namespaces
 
 If you need to produce XML with multiple namespaces mapped to different prefixes, you can use `XmlWriter.writeDocumentWithNamespaceMapping`. This method allows you to specify a default namespace and any number of additional namespace prefixes and URIs. All child elements will use the namespace of the parent element, unless the child element gets a new namespace from the mapping.
 
