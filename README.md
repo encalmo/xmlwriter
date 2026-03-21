@@ -402,11 +402,11 @@ This approach is useful for generating XML that integrates with schemas or APIs 
 
 Use with SBT
 
-    libraryDependencies += "org.encalmo" %% "xmlwriter" % "0.17.0"
+    libraryDependencies += "org.encalmo" %% "xmlwriter" % "0.18.0"
 
 or with SCALA-CLI
 
-    //> using dep org.encalmo::xmlwriter:0.17.0
+    //> using dep org.encalmo::xmlwriter:0.18.0
 
 ## More examples
 
